@@ -1,0 +1,24 @@
+{
+  "name": "drone-telemetry",
+  "version": "1.0.0",
+  "description": "npm package for drone communications. Created for dO2s software",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/upm-space/drone-telemetry.git"
+  },
+  "keywords": [
+    "drone",
+    "telemetry",
+    "mavlink"
+  ],
+  "author": "Luis Izquierdo Mesa luisizquierdomesa@gmail.com (www.luisizquierdo.es)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/upm-space/drone-telemetry/issues"
+  },
+  "homepage": "https://github.com/upm-space/drone-telemetry#readme"
+}
