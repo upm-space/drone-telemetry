@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/upm-space/drone-telemetry/issues"
   },
-  "homepage": "https://github.com/upm-space/drone-telemetry#readme"
+  "homepage": "https://github.com/upm-space/drone-telemetry#readme",
+  "dependencies": {
+    "serialport": "^5.0.0"
+  }
 }
