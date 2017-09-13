@@ -26,19 +26,31 @@ class Telemetry extends EventEmitter{
         this.activateMavlinkSerialListeners();
 
     }
+
     activateMavlinkSerialListeners(){
-        this.m.attitude.eventEmitter.on('data',(data)=>{
-            this.emit('attitude',data);
-        })
         //TODO events to register
-        //GPS_RAW_INT
-        //VFR_HUD
         //HEARTBEAT
         //SYS_STATUS
-        //MISSION_CURRENT ??
-        //NAV_CONTROLLER_OUTPUT ??
+        //GPS_RAW_INT
+        //ATTITUTDE
+        //MISSION_CURRENT
+        //NAV_CONTROLLER_OUTPUT
+        //VFR_HUD
+
+        this.m.attitudeR.eventEmitter.on('data',(data)=>{
+            this.emit('attitude',data);
+        })
+
+        this.m.heartbeatR.eventEmitter.on('data',(data)=>{
+            this.emit('heartbeat',data);
+        })
+
+        this.m.sys_statusR.eventEmitter.on('data',(data)=>{
+            this.emit('sys_status',data);
+        })
 
     }
+
     closeConnection(){
 
     }

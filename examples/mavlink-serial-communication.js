@@ -3,7 +3,18 @@
 let Telemetry = require('../telemetry.js');
 let telemetry = new Telemetry.Telemetry();
 
-telemetry.connectToMavLinkViaSerial('/dev/ttyACM0',115200);
+//var serialPort = '/dev/ttyACM0'; //linux
+var serialPort = 'COM10';          //windows
+
+telemetry.connectToMavLinkViaSerial(serialPort,115200);
 telemetry.on('attitude', (data)=>{
-    console.log(data.pitch);
+    console.log(data);
+});
+
+telemetry.on('heartbeat', (data)=>{
+    console.log(data);
+});
+
+telemetry.on('sys_status', (data)=>{
+    console.log(data);
 });

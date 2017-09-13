@@ -16,6 +16,7 @@ var attitudeMessage = function() {
     this.crc = 0;
     this.buffer=new Buffer(36);
     this.crc_buf = new Buffer(this.buffer.length-2);
+
     this.eventEmitter = new events.EventEmitter();
 
     this.read = function(data){
@@ -54,6 +55,7 @@ var attitudeMessage = function() {
 
     this.getData = ()=>{
         return{
+            'parameter'         : "ATTITUDE",
             'time_boot_mst'     : this.time_boot_ms,
             'pitch'             : this.pitch ,
             'roll'              : this.roll ,
@@ -63,9 +65,8 @@ var attitudeMessage = function() {
             'yawspeed'          : this.yawspeed
 
             }
-
-
     }
+
 };
 
 module.exports.attitudeMessage = attitudeMessage
