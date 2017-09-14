@@ -8,13 +8,14 @@ var serialPort = 'COM10';          //windows
 
 telemetry.connectToMavLinkViaSerial(serialPort,115200);
 telemetry.on('attitude', (data)=>{
-    console.log(data);
+    console.log(data.roll);
 });
 
-telemetry.on('heartbeat', (data)=>{
+/*telemetry.on('heartbeat', (data)=>{
     console.log(data);
 });
 
 telemetry.on('sys_status', (data)=>{
     console.log(data);
 });
+*/

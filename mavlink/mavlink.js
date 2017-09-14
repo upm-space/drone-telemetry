@@ -2,9 +2,14 @@ var inicioMensaje = false;
 
 //-------------------------------------------------------------------------------------------------------------------------------------------
 //DEFINICION DE PARAMETROS
-let attitudeMessage = require('./messages/attitude.js');
+
 let heartbeatMessage = require('./messages/heartbeat.js');
 let sys_statusMessage = require('./messages/sys_status.js');
+let gps_raw_intMessage = require('./messages/gps_raw_int.js');
+let attitudeMessage = require('./messages/attitude.js');
+let mission_currentMessage = require('./messages/mission_current.js');
+let nav_controller_outputMessage = require('./messages/nav_controller_output.js');
+let vfr_hudMessage = require('./messages/vfr_hud.js');
 //-------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------
@@ -39,8 +44,11 @@ var mavlinkMessage = function(){
     //Para leer los mensajes que vayan llegando
     this.heartbeatR = new heartbeatMessage.heartbeatMessage();
     this.sys_statusR = new sys_statusMessage.sys_statusMessage();
+    this.gps_raw_intR = new gps_raw_intMessage.gps_raw_intMessage();
     this.attitudeR = new attitudeMessage.attitudeMessage();
-
+    this.mission_currentR = new mission_currentMessage.mission_currentMessage();
+    this.nav_controller_outputR = new nav_controller_outputMessage.nav_controller_outputMessage();
+    this.vfr_hudR = new vfr_hudMessage.vrf_hudMessage();
 
 };
 
@@ -80,8 +88,20 @@ mavlinkMessage.prototype.decodeMessage = function(char){
             case 0x1: //sys_status
                 this.sys_statusR.read(messageB);
                 break;
-            case 0x1E: //actitud
+            case 0x18: //gps_raw_int
+                this.gps_raw_intR.read(messageB);
+                break;
+            case 0x1E: //attitud
                 this.attitudeR.read(messageB);
+                break;
+            case 0x2a: //mission_current
+                this.gps_raw_intR.read(messageB);
+                break;
+            case 0x3e: //nav_controller_output
+                this.nav_controller_outputR.read(messageB);
+                break;
+            case 0x4a: //vfr_hud
+                this.vfr_hudR.read(messageB);
                 break;
 
         }

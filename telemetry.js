@@ -32,14 +32,10 @@ class Telemetry extends EventEmitter{
         //HEARTBEAT
         //SYS_STATUS
         //GPS_RAW_INT
-        //ATTITUTDE
+        //ATTITUDE
         //MISSION_CURRENT
         //NAV_CONTROLLER_OUTPUT
         //VFR_HUD
-
-        this.m.attitudeR.eventEmitter.on('data',(data)=>{
-            this.emit('attitude',data);
-        })
 
         this.m.heartbeatR.eventEmitter.on('data',(data)=>{
             this.emit('heartbeat',data);
@@ -47,6 +43,25 @@ class Telemetry extends EventEmitter{
 
         this.m.sys_statusR.eventEmitter.on('data',(data)=>{
             this.emit('sys_status',data);
+        })
+        this.m.gps_raw_intR.eventEmitter.on('data',(data)=>{
+            this.emit('gps_raw_int',data);
+        })
+
+        this.m.attitudeR.eventEmitter.on('data',(data)=>{
+            this.emit('attitude',data);
+        })
+
+        this.m.mission_currentR.eventEmitter.on('data',(data)=>{
+            this.emit('mission_current',data);
+        })
+
+        this.m.nav_controller_outputR.eventEmitter.on('data',(data)=>{
+            this.emit('nav_controller_output',data);
+        })
+
+        this.m.vfr_hudR.eventEmitter.on('data',(data)=>{
+            this.emit('vfr_hud',data);
         })
 
     }
