@@ -28,7 +28,10 @@ var gps_raw_intMessage = function() {
     this.eventEmitter = new events.EventEmitter();
 
     this.read = function(data){
-        this.time_usec = data.readUInt64LE(6);
+        //this.time_usec = data.readUInt64LE(6);
+        var val1 = data.readUInt32LE(6);
+        var val2 = data.readUInt32LE(10);
+        this.time_usec = (val1<<32) + (val2);
         this.lat = data.readInt32LE(14);
         this.lon = data.readInt32LE(18);
         this.alt = data.readInt32LE(22);
@@ -55,7 +58,7 @@ var gps_raw_intMessage = function() {
         this.buffer[3] = 1;
         this.buffer[4] = 1;
         this.buffer[5] = 0x18;
-        this.time_usec = this.buffer.writeUInt64LE(6);
+        //this.time_usec = this.buffer.writeUInt64LE(6);
         this.buffer.writeInt32LE(this.lat, 14);
         this.buffer.writeInt32LE(this.lon, 18);
         this.buffer.writeInt32LE(this.alt, 22);

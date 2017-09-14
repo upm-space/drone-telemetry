@@ -3,7 +3,7 @@ const events = require('events');
 /**
  * Attitude ID:42 http://mavlink.org/messages/common#MISSION_CURRENT
  */
-var heartbeatMessage = function() {
+var mission_currentMessage = function() {
     //MISSION_CURRENT uint16_t seq
     this.seq=0;
 

@@ -48,7 +48,7 @@ var mavlinkMessage = function(){
     this.attitudeR = new attitudeMessage.attitudeMessage();
     this.mission_currentR = new mission_currentMessage.mission_currentMessage();
     this.nav_controller_outputR = new nav_controller_outputMessage.nav_controller_outputMessage();
-    this.vfr_hudR = new vfr_hudMessage.vrf_hudMessage();
+    this.vfr_hudR = new vfr_hudMessage.vfr_hudMessage();
 
 };
 
@@ -89,13 +89,13 @@ mavlinkMessage.prototype.decodeMessage = function(char){
                 this.sys_statusR.read(messageB);
                 break;
             case 0x18: //gps_raw_int
-                this.gps_raw_intR.read(messageB);
+                //this.gps_raw_intR.read(messageB);
                 break;
             case 0x1E: //attitud
                 this.attitudeR.read(messageB);
                 break;
             case 0x2a: //mission_current
-                this.gps_raw_intR.read(messageB);
+                this.mission_currentR.read(messageB);
                 break;
             case 0x3e: //nav_controller_output
                 this.nav_controller_outputR.read(messageB);
