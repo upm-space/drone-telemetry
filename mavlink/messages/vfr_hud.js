@@ -1,8 +1,22 @@
 //http://mavlink.org/messages/common
 const events = require('events');
 /**
- * Attitude ID:74 http://mavlink.org/messages/common#VFR_HUD
+ * VRF_HUD ID:74 http://mavlink.org/messages/common#VFR_HUD
  */
+
+//-------------------------------------------------------------------------------------------------------------------------------------------
+//Calcula Crc-16/x.25
+var calculateChecksum = function(buffer) {
+    checksum = 0xffff;
+    for (var i = 0; i < buffer.length; i++) {
+        var tmp = buffer[i] ^ (checksum & 0xff);
+        tmp = (tmp ^ (tmp<<4)) & 0xFF;
+        checksum = (checksum>>8) ^ (tmp<<8) ^ (tmp<<3) ^ (tmp>>4);
+        checksum = checksum & 0xFFFF;
+    }
+    return checksum;
+}
+
 var vfr_hudMessage = function() {
     //VRF_HUD float airspeed float groundspeed float alt float climb int16_t heading uint16_t throttle
     this.airspeed=0;

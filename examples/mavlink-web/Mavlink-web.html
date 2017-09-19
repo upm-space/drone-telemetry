@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mavlink web</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css" >
+</head>
+<body>
+
+<div class="row">
+    <div class="column side">
+        <div>
+            <p id="roll">Roll: 121</p>
+            <p id="pitch">Pitch: 121</p>
+            <p id="yaw">Yaw: 121</p>
+            <p id="estatus">Disarmed</p>
+            <p id="flightmodetext">Flight mode: </p>
+            <p id="autopilottext">Autopilot: </p>
+            <p id="typetext">Drone type: </p>
+        </div>
+        <div>
+            <button type="button" onclick="armDisarm()">Arm/Disarm</button>
+        </div>
+        <br>
+        <div>
+            <form>
+                <select id="flightmodeselect" size="1">
+                    <option>Manual</option>
+                    <option>Stabilize</option>
+                    <option>Auto</option>
+                    <option>RTL</option>
+                    <option>Loiter</option>
+                    <option>Guided</option>
+                </select>
+            </form>
+            <button type="button" onclick="setFlightMode()">Select flight mode</button>
+        </div>
+        <br>
+        <div>
+            <form>
+                <select style="width: 150px" id="logs" size="10">
+
+                </select>
+            </form>
+            <button type="button" onclick="requestLogList()">Request log list</button>
+            <button type="button" onclick="requestLog()">Request log</button>
+            <p id="logtext"> </p>
+        </div>
+
+    </div>
+    <div class="column middle">
+
+    </div>
+    <div class="column side">
+
+    </div>
+</div>
+
+</body>
+
+<script>
+    var armdis = "Disarmed";
+    var flightMode;
+    var autopilot;
+    var type ;
+
+
+    var client = new WebSocket('ws://localhost:8080/ws');
+    client.onerror = function () {
+        console.log('Connection Error');
+    }
+    client.onopen = function () {
+        console.log('WebSocket Client Connected');
+    }
+
+    client.onclose = function () {
+        console.log('Client Closed');
+    }
+    client.onmessage = function (e) {
+        //console.log(e.data);
+        var mensaje = e.data;
+        var separar = mensaje.split(",");
+        console.log(separar[0]);
+        if (separar[0] == "attitude"){
+            document.getElementById("roll").innerHTML = "Roll: " + separar[1];
+            document.getElementById("pitch").innerHTML = "Pitch: " + separar[2];
+            document.getElementById("yaw").innerHTML = "Yaw: " + separar[3];
+        }
+        if (separar[0] == "heartbeat"){
+            armdis = separar[1];
+            flightMode = separar[2];
+            autopilot = separar[3];
+            type = separar[4];
+
+
+            document.getElementById("estatus").innerHTML = armdis;
+            document.getElementById("flightmodetext").innerHTML = "Flight mode: " + flightMode;
+            document.getElementById("autopilottext").innerHTML = "Autopilot: " + autopilot;
+            document.getElementById("typetext").innerHTML = "Drone type: " + type;
+
+        }
+
+        if (separar[0] == 'logEntryRecibido'){
+            document.getElementById("logtext").innerHTML = "Recibidos: " + separar[1] + " de " + separar[2];
+            var x = document.getElementById("logs");
+            var option = document.createElement("option");
+            option.text = "log_" + separar[1];
+            x.add(option)
+        }
+
+        if (separar[0] == 'paqueteLog'){
+            document.getElementById("logtext").innerHTML = "Recibidos: " + separar[1] + "/" + separar[2] + " bytes";
+        }
+
+    }
+
+    var armDisarm = function(){
+        if (armdis == "Disarmed"){
+            var message = "armDisarm,arm"
+            client.send(message);
+            armdis="Armed";
+            //document.getElementById("estatus").innerHTML = armdis;
+        }else if(armdis == "Armed"){
+            var message = "armDisarm,disarm"
+            client.send(message);
+            armDis = "Disarmed";
+            //document.getElementById("estatus").innerHTML = armdis;
+        }
+    }
+
+    var setFlightMode = function(){
+        var selFlightMode = document.getElementById("flightmodeselect").value;
+        var message = "setFlighMode" + "," + selFlightMode;
+        client.send(message);
+    }
+
+    var requestLogList = function(){
+        var message = "requestLogList";
+        client.send(message);
+    }
+
+    var requestLog = function(){
+        var log = document.getElementById("logs").value;
+        console.log(log);
+        var logseparado = log.split("_");
+        var message = "requestLog" + "," + logseparado[1];
+        client.send(message);
+    }
+
+</script>
+
+</html>

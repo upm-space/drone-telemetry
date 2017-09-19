@@ -1,8 +1,22 @@
 //http://mavlink.org/messages/common
 const events = require('events');
 /**
- * Attitude ID:24 http://mavlink.org/messages/common#GPS_RAW_INT
+ * GPS_RAW_INT ID:24 http://mavlink.org/messages/common#GPS_RAW_INT
  */
+
+//-------------------------------------------------------------------------------------------------------------------------------------------
+//Calcula Crc-16/x.25
+var calculateChecksum = function(buffer) {
+    checksum = 0xffff;
+    for (var i = 0; i < buffer.length; i++) {
+        var tmp = buffer[i] ^ (checksum & 0xff);
+        tmp = (tmp ^ (tmp<<4)) & 0xFF;
+        checksum = (checksum>>8) ^ (tmp<<8) ^ (tmp<<3) ^ (tmp>>4);
+        checksum = checksum & 0xFFFF;
+    }
+    return checksum;
+}
+
 var gps_raw_intMessage = function() {
     //GPS_RAW_INT uint64_t time_usec int32_t lat int32_t lon int32_t alt int32_t alt_ellipsoid uint32_t h_acc uint32_t v_acc uint32_t vel_acc uint32_t hdg_acc uint16_t eph uint16_t epv uint16_t vel uint16_t cog uint8_t fix_type uint8_t satellites_visible
     this.time_usec=0;

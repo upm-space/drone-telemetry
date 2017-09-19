@@ -1,7 +1,7 @@
 //http://mavlink.org/messages/common
 const events = require('events');
 /**
- * MISSION_CURRENT ID:42 http://mavlink.org/messages/common#MISSION_CURRENT
+ * Command_ack ID:77 http://mavlink.org/messages/common#COMMAND_ACK
  */
 
 //-------------------------------------------------------------------------------------------------------------------------------------------
@@ -17,19 +17,21 @@ var calculateChecksum = function(buffer) {
     return checksum;
 }
 
-var mission_currentMessage = function() {
-    //MISSION_CURRENT uint16_t seq
-    this.seq=0;
+var command_ackMessage = function() {
+    //COMMAND_ACK uint16_t command uint8_t result
+    this.command=0;
+    this.result=0;
 
-    this.crcMission_current=28;
+    this.crcCommand_ack=143;
     this.crc = 0;
-    this.buffer = new Buffer(10);
+    this.buffer = new Buffer(11);
     this.crc_buf = new Buffer(this.buffer.length-2);
 
     this.eventEmitter = new events.EventEmitter();
 
     this.read = function(data){
-        this.seq = data.readUInt16LE(6);
+        this.command = data.readUInt16LE(6);
+        this.result = data.readUInt8(8);
 
         data.copy(this.buffer,0,0,this.buffer.length);
         this.eventEmitter.emit('data',this.getData());
@@ -42,22 +44,24 @@ var mission_currentMessage = function() {
         //this.buffer[2] = 2;
         this.buffer[3] = 1;
         this.buffer[4] = 1;
-        this.buffer[5] = 0x2a;
-        this.buffer.writeUInt16LE(this.seq, 6);
+        this.buffer[5] = 0x4d;
+        this.buffer.writeUInt16LE(this.command, 6);
+        this.buffer.writeUInt(this.result, 8);
+
 
         this.buffer.copy(this.crc_buf,0,1,this.buffer[1]+6);
-        this.crc_buf[this.crc_buf.length-1] = this.crcMission_current;
+        this.crc_buf[this.crc_buf.length-1] = this.crcCommand_ack;
         this.crc = calculateChecksum(this.crc_buf)
         this.buffer.writeUInt16LE(this.crc,this.buffer[1]+6);
     };
 
     this.getData = ()=>{
         return{
-            'parameter'         : "MISSION_CURRENT",
-            'seq'     : this.seq
+            'parameter'         : "COMMAND_ACK",
+            'command'     : this.command,
+            'result'     : this.result,
         }
     };
-
 };
 
-module.exports.mission_currentMessage = mission_currentMessage
+module.exports.command_ackMessage = command_ackMessage

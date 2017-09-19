@@ -1,8 +1,22 @@
 //http://mavlink.org/messages/common
 const events = require('events');
 /**
- * Attitude ID:62 http://mavlink.org/messages/common#NAV_CONTROLLER_OUTPUT
+ * NAV_CONTROLLER_OUTPUT ID:62 http://mavlink.org/messages/common#NAV_CONTROLLER_OUTPUT
  */
+
+//-------------------------------------------------------------------------------------------------------------------------------------------
+//Calcula Crc-16/x.25
+var calculateChecksum = function(buffer) {
+    checksum = 0xffff;
+    for (var i = 0; i < buffer.length; i++) {
+        var tmp = buffer[i] ^ (checksum & 0xff);
+        tmp = (tmp ^ (tmp<<4)) & 0xFF;
+        checksum = (checksum>>8) ^ (tmp<<8) ^ (tmp<<3) ^ (tmp>>4);
+        checksum = checksum & 0xFFFF;
+    }
+    return checksum;
+}
+
 var nav_controller_outputMessage = function() {
     //NAV_CONTROLLER_OUTPUT float nav_roll float nav_pitch float alt_error float aspd_error float xtrack_error int16_t nav_bearing int16_t target_bearing uint16_t wp_dist
     this.nav_roll=0;

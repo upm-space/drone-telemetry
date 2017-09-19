@@ -1,8 +1,22 @@
 //http://mavlink.org/messages/common
 const events = require('events');
 /**
- * Attitude ID:1 http://mavlink.org/messages/common#SYS_STATUS
+ * SYS_STATUS ID:1 http://mavlink.org/messages/common#SYS_STATUS
  */
+
+//-------------------------------------------------------------------------------------------------------------------------------------------
+//Calcula Crc-16/x.25
+var calculateChecksum = function(buffer) {
+    checksum = 0xffff;
+    for (var i = 0; i < buffer.length; i++) {
+        var tmp = buffer[i] ^ (checksum & 0xff);
+        tmp = (tmp ^ (tmp<<4)) & 0xFF;
+        checksum = (checksum>>8) ^ (tmp<<8) ^ (tmp<<3) ^ (tmp>>4);
+        checksum = checksum & 0xFFFF;
+    }
+    return checksum;
+}
+
 var sys_statusMessage = function() {
     //SYS_STATUS uint32_t onboard_control_sensors_present uint32_t onboard_control_sensors_enabled uint32_t onboard_control_sensors_health uint16_t load uint16_t voltage_battery int16_t current_battery uint16_t drop_rate_comm uint16_t errors_comm uint16_t errors_count1 uint16_t errors_count2 uint16_t errors_count3 uint16_t errors_count4 int8_t battery_remaining
     this.onboard_control_sensors_present=0;

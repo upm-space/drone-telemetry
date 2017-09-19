@@ -1,3 +1,4 @@
+var EventEmitter = require('events').EventEmitter;
 var inicioMensaje = false;
 
 //-------------------------------------------------------------------------------------------------------------------------------------------
@@ -10,6 +11,13 @@ let attitudeMessage = require('./messages/attitude.js');
 let mission_currentMessage = require('./messages/mission_current.js');
 let nav_controller_outputMessage = require('./messages/nav_controller_output.js');
 let vfr_hudMessage = require('./messages/vfr_hud.js');
+let command_longMessage = require('./messages/command_long.js');
+let command_ackMessage = require('./messages/command_ack.js');
+let set_modeMessage = require('./messages/set_mode.js');
+let log_request_listMessage = require('./messages/log_request_list.js');
+let log_entryMessage = require('./messages/log_entry.js');
+let log_request_dataMessage = require('./messages/log_request_data.js');
+let log_dataMessage = require('./messages/log_data.js');
 //-------------------------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------------------------
@@ -49,9 +57,34 @@ var mavlinkMessage = function(){
     this.mission_currentR = new mission_currentMessage.mission_currentMessage();
     this.nav_controller_outputR = new nav_controller_outputMessage.nav_controller_outputMessage();
     this.vfr_hudR = new vfr_hudMessage.vfr_hudMessage();
+    this.command_ackR = new command_ackMessage.command_ackMessage();
+
+    //Para enviar mensajes
+    this.command_longS = new command_longMessage.command_longMessage();
+    this.set_modeS = new set_modeMessage.set_modeMessage();
+
+    //Variables para recibir lista de logs
+    this.logrequestlist = new log_request_listMessage.log_request_listMessage();
+    this.log_entryR = new log_entryMessage.log_entryMessage();
+
+    //Variables para recibir log
+    this.logrequestdata = new log_request_dataMessage.log_request_dataMessage();
+    this.log_dataR = new log_dataMessage.log_dataMessage();
+
+    this.logoffset = 0;
+    this.logsize = 0;
+    this.logbytes = 0;
+
 
 };
 
+mavlinkMessage.super_ = EventEmitter;
+mavlinkMessage.prototype = Object.create(EventEmitter.prototype, {
+    constructor: {
+        value: mavlinkMessage,
+        enumerable: false
+    }
+});
 
 
 mavlinkMessage.prototype.decodeMessage = function(char){
@@ -103,6 +136,15 @@ mavlinkMessage.prototype.decodeMessage = function(char){
             case 0x4a: //vfr_hud
                 this.vfr_hudR.read(messageB);
                 break;
+            case 0x4d: //command_ack
+                this.command_ackR.read(messageB);
+                break;
+            case 0x76: //log_entry
+                this.readloglist(messageB);
+                break;
+            case 0x78: //log_data
+                this.readlogdata(messageB);
+                break;
 
         }
 
@@ -117,6 +159,54 @@ mavlinkMessage.prototype.readBuffer = function(buffer){
         this.decodeMessage(buffer[i]);
     }
 };
+
+mavlinkMessage.prototype.readloglist = function(buffer){
+    this.log_entryR.read(buffer);
+    var logentryname = "log_entry" + this.log_entryR.id;
+    //this[logentryname] = Object.assign({},this.log_entryR);
+    this[logentryname] = new log_entryMessage.log_entryMessage();
+    this[logentryname].id = this.log_entryR.id;
+    this[logentryname].size = this.log_entryR.size;
+    console.log(this[logentryname].id);
+    this.loglistContador++;
+
+    this.emit("logEntryRecibido", this.loglistContador, this.log_entryR.num_logs);
+
+    if (this.log_entryR.id == this.log_entryR.num_logs){
+        /*if(this.loglistContador != this.log_entryR.num_logs){
+            console.log("ERROR EN LA ENTREGA");
+            console.log("NUEVA PETICION");
+            this.emit("pedirListaLogs");
+        }*/
+        if(this.loglistContador == this.log_entryR.num_logs){
+            this.emit("listaLogsRecibida");
+        }
+    }
+};
+
+mavlinkMessage.prototype.readlogdata = function(buffer){
+    this.log_dataR.read(buffer);
+    this.log_dataR.data.copy(this.logbuffer,this.log_dataR.ofs,0,this.log_dataR.count);
+    this.logbytes+=this.log_dataR.count;
+
+    if(this.logoffset != this.log_dataR.ofs){
+        console.log("ERROR AL RECIBIR EL LOG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    }
+
+    this.emit("paqueteLog", this.logbytes, this.logsize);
+
+    if (this.logbytes == this.logsize){
+        this.logoffset = 0;
+        this.logbytes = 0;
+        this.emit("logRecibido", this.log_dataR.id);
+    }
+    this.logoffset+=90;
+};
+
+mavlinkMessage.prototype.createLogBuffer = function(size){
+    this.logbuffer = new Buffer(size);
+};
+
 
 sendMessage = function(payload){
     if (inicioMensaje == false){

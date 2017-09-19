@@ -1,8 +1,22 @@
 //http://mavlink.org/messages/common
 const events = require('events');
 /**
- * Attitude ID:0 http://mavlink.org/messages/common#HEARTBEAT
+ * HEARTBEAT ID:0 http://mavlink.org/messages/common#HEARTBEAT
  */
+
+//-------------------------------------------------------------------------------------------------------------------------------------------
+//Calcula Crc-16/x.25
+var calculateChecksum = function(buffer) {
+    checksum = 0xffff;
+    for (var i = 0; i < buffer.length; i++) {
+        var tmp = buffer[i] ^ (checksum & 0xff);
+        tmp = (tmp ^ (tmp<<4)) & 0xFF;
+        checksum = (checksum>>8) ^ (tmp<<8) ^ (tmp<<3) ^ (tmp>>4);
+        checksum = checksum & 0xFFFF;
+    }
+    return checksum;
+}
+
 var heartbeatMessage = function() {
     //HEARTBEAT uint32_t custom_mode uint8_t type uint8_t autopilot uint8_t base_mode uint8_t system_status uint8_t mavlink_version
     this.type=1; //fixed wing
@@ -11,6 +25,11 @@ var heartbeatMessage = function() {
     this.custom_mode=0;
     this.system_status=0;
     this.mavlink_version=0;
+
+    this.armDisarm="";
+    this.flightMode="";
+    this.mav_autopilot="";
+    this.mav_type="";
 
     this.crcHeartbeat=50;
     this.crc = 0;
@@ -27,6 +46,7 @@ var heartbeatMessage = function() {
         this.system_status = data.readUInt8(13);
         this.mavlink_version = data.readUInt8(14);
         data.copy(this.buffer,0,0,this.buffer.length);
+        this.getStatus(this.base_mode, this.custom_mode, this.autopilot, this.type);
         this.eventEmitter.emit('data',this.getData());
     };
 
@@ -51,6 +71,57 @@ var heartbeatMessage = function() {
         this.buffer.writeUInt16LE(this.crc,this.buffer[1]+6);
     };
 
+    this.getStatus = function(baseMode, customMode, autopilot, type){
+        if (baseMode == 89 || baseMode == 81  ){
+            this.armDisarm = "Disarmed";
+        }
+        if (baseMode == 217 || baseMode == 209 ){
+            this.armDisarm = "Armed";
+        }
+        switch (customMode){
+            case 0:
+                this.flightMode = "Manual";
+                break;
+            case 2:
+                this.flightMode = "Stabilize";
+                break;
+            case 10:
+                this.flightMode = "Auto";
+                break;
+            case 11:
+                this.flightMode = "RTL";
+                break;
+            case 12:
+                this.flightMode = "Loiter";
+                break;
+            case 15:
+                this.flightMode = "Guided";
+                break;
+        }
+        switch (autopilot){
+            case 3:
+                this.mav_autopilot = "Ardupilotmega";
+                break;
+            case 12:
+                this.mav_autopilot = "PX4";
+                break;
+        }
+        switch (type){
+            case 0:
+                this.mav_type = "Generic";
+                break;
+            case 1:
+                this.mav_type = "Fixed wing";
+                break;
+            case 2:
+                this.mav_type = "Quadrotor";
+                break;
+            case 6:
+                this.mav_type = "GCS";
+                break;
+        }
+    }
+
     this.getData = ()=>{
         return{
             'parameter'         : "HEARTBEAT",
@@ -59,7 +130,11 @@ var heartbeatMessage = function() {
             'autopilot'              : this.autopilot ,
             'base_mode'               : this.base_mode ,
             'system_status'        : this.system_status ,
-            'mavlink_version'         : this.mavlink_version
+            'mavlink_version'         : this.mavlink_version,
+            'armDisarm'              : this.armDisarm,
+            'flightMode'            : this.flightMode,
+            'mav_autopilot'          :this.mav_autopilot,
+            'mav_type'              :this.mav_type
         }
     };
 
