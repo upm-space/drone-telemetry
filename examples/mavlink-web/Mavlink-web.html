@@ -11,6 +11,15 @@
 <div class="row">
     <div class="column side">
         <div>
+            <select id="Bauds" size="1">
+                <option>115200</option>
+                <option>57600</option>
+            </select>
+            <select id="AvailablePorts" size="1">
+            </select>
+            <button type="button" onclick="connect()">Connect</button>
+        </div>
+        <div>
             <p id="roll">Roll: 121</p>
             <p id="pitch">Pitch: 121</p>
             <p id="yaw">Yaw: 121</p>
@@ -72,6 +81,8 @@
     }
     client.onopen = function () {
         console.log('WebSocket Client Connected');
+        var message = {type:"getPorts"};
+        client.send(JSON.stringify(message));
     }
 
     client.onclose = function () {
@@ -113,6 +124,27 @@
             document.getElementById("logtext").innerHTML = "Recibidos: " + separar[1] + "/" + separar[2] + " bytes";
         }
 
+        try{
+            var msg = JSON.parse(mensaje);
+            console.log(msg.type)
+            if(msg.type){
+                if(msg.type == "ports"){
+                    msg.ports.forEach((port)=>{
+                        var x = document.getElementById("AvailablePorts");
+                        var option = document.createElement("option");
+                        option.text = port.portName;
+                        x.add(option);
+                    })
+                }
+                if(msg.type == "message"){
+                    document.getElementById("logtext").innerHTML = msg.msg;
+                }
+
+            }
+        }catch(error){
+            console.log(error)
+        }
+
     }
 
     var armDisarm = function(){
@@ -127,6 +159,13 @@
             armDis = "Disarmed";
             //document.getElementById("estatus").innerHTML = armdis;
         }
+    }
+
+    var connect = function(){
+        var bauds = document.getElementById("Bauds").value;
+        var port = document.getElementById("AvailablePorts").value;
+        var message = {type:"connect", bauds:bauds,port:port};
+        client.send(JSON.stringify(message));
     }
 
     var setFlightMode = function(){

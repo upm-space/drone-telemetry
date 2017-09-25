@@ -1,11 +1,14 @@
 'use strict';
 
-let Telemetry = require('../telemetry.js');
+let Telemetry = require('../../telemetry.js');
+let SerialPortUtilities = require('../../utils/list-serial-port');
 let telemetry = new Telemetry.Telemetry();
+let port = new SerialPortUtilities.SerialPortUtilities();
+let acumulado = 0;
 
-var serialPort = 'COM10';          //windows
+//var serialPort = 'COM10';          //windows
 
-telemetry.connectToMavLinkViaSerial(serialPort,115200);
+//telemetry.connectToMavLinkViaSerial(serialPort,115200);
 
 const WebSocket = require('ws');
 
@@ -13,7 +16,7 @@ const wss = new WebSocket.Server({ port: 8080 });
 
 
 wss.on('connection', function connection(ws) {
-
+    telemetry.setWs(ws);
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
         var mensaje = message;
@@ -34,6 +37,33 @@ wss.on('connection', function connection(ws) {
         if(separar[0] == "requestLog"){
             telemetry.getLogFile(separar[1]);
         }
+        try{
+            var msg = JSON.parse(message);
+            console.log(msg.type)
+            if(msg.type){
+                if(msg.type == "connect"){
+                    console.log(msg.bauds);
+                    telemetry.connectToMavLinkViaSerial(msg.port,msg.bauds);
+                }
+                if(msg.type == "getPorts"){
+                    let arrports = [];
+                    port.list((ports)=>{
+                        ports.forEach((port)=>{
+                            arrports.push({portName:port.comName});
+                        })
+                        let msg = {type:"ports", ports:arrports};
+                        msg = JSON.stringify(msg);
+                        ws.send(msg);
+                    });
+                    //console.log(msg.bauds);
+                    //telemetry.connectToMavLinkViaSerial(msg.port,msg.bauds);
+                }
+
+            }
+        }catch(error){
+            console.log(error)
+        }
+
 
     });
 
@@ -52,13 +82,25 @@ wss.on('connection', function connection(ws) {
     telemetry.on('logEntryRecibido', (listContador, num_logs)=>{
         //console.log(data);
         var message = 'logEntryRecibido' + "," + listContador + "," + num_logs;
+        acumulado = 0;
         ws.send(message);
     });
 
     telemetry.on('paqueteLog', (logbytes, logsize)=>{
-        //console.log(data);
-        var message = 'paqueteLog' + "," + logbytes + "," + logsize;
-        ws.send(message);
+        //console.log('paquete log');
+        acumulado += 1;
+        //acumulado +=logbytes;
+        if(acumulado > 40) {
+            console.log(`ACUMULADO*******************************************************${acumulado}`);
+            acumulado = 0;
+            var message = 'paqueteLog' + "," + logbytes + "," + logsize;
+            ws.send(message);
+        }
+        if(logbytes == logsize){
+            let msg = {type:"message", msg:`descarga finalizada (${logbytes} bytes)`};
+            msg = JSON.stringify(msg);
+            ws.send(msg);
+        }
 });
 
 
