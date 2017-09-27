@@ -19,11 +19,11 @@ var calculateChecksum = function(buffer) {
 
 
 var log_entryMessage = function() {
-    //LOG_ENTRY uint32_t time_utc uint32_t size uint16_t id uint16_t num_logs uint16_t last_log_num
+    //LOG_ENTRY uint32_t time_utc uint32_t size uint16_t id uint16_t numLogs uint16_t last_log_num
     this.time_utc=0;
     this.size=0;
     this.id=0;
-    this.num_logs=0;
+    this.numLogs=0;
     this.last_log_num=0;
 
     this.crcLog_entry=56;
@@ -37,7 +37,7 @@ var log_entryMessage = function() {
         this.time_utc=data.readUInt32LE(6);
         this.size=data.readUInt32LE(10);
         this.id=data.readUInt16LE(14);
-        this.num_logs=data.readUInt16LE(16);
+        this.numLogs=data.readUInt16LE(16);
         this.last_log_num=data.readUInt16LE(18);
 
         data.copy(this.buffer,0,0,this.buffer.length);
@@ -55,7 +55,7 @@ var log_entryMessage = function() {
         this.buffer.writeUInt32LE(this.time_utc,6);
         this.buffer.writeUInt32LE(this.size,10);
         this.buffer.writeUInt16LE(this.id,14);
-        this.buffer.writeUInt16LE(this.num_logs,16);
+        this.buffer.writeUInt16LE(this.numLogs,16);
         this.buffer.writeUInt16LE(this.last_log_num,18);
 
         this.buffer.copy(this.crc_buf,0,1,this.buffer[1]+6);
@@ -70,7 +70,7 @@ var log_entryMessage = function() {
             'time_utc'     : this.time_utc,
             'size'     : this.size,
             'id' : this.id,
-            'num_logs'  : this.num_logs,
+            'numLogs'  : this.numLogs,
             'last_log_num' : this.last_log_num
         }
     };

@@ -182,8 +182,10 @@
     var requestLog = function(){
         var log = document.getElementById("logs").value;
         console.log(log);
+
         var logseparado = log.split("_");
-        var message = "requestLog" + "," + logseparado[1];
+        logseparado = logseparado[1].split("(");
+        var message = "requestLog" + "," + logseparado[0].trim();
         client.send(message);
     }
 

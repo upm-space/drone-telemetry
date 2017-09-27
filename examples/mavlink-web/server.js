@@ -79,9 +79,11 @@ wss.on('connection', function connection(ws) {
         ws.send(message);
     });
 
-    telemetry.on('logEntryRecibido', (listContador, num_logs)=>{
+    telemetry.on('logEntryRecibido', (listContador, numLogs, size)=>{
         //console.log(data);
-        var message = 'logEntryRecibido' + "," + listContador + "," + num_logs;
+        size = (size/1024)/1024; // converted from bytes to Mg
+        size = size.toFixed(2);
+        var message = 'logEntryRecibido' + "," + listContador + ` (${size})Mb` + "," + numLogs;
         acumulado = 0;
         ws.send(message);
     });
@@ -105,4 +107,3 @@ wss.on('connection', function connection(ws) {
 
 
 });
-
