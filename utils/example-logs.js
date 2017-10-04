@@ -1,8 +1,12 @@
 
 const MavlinkLogs = require('./logs');
 
-const binFile = '/media/luis/data/srm/ImagenesPruebas/logs/calatayud/convertedByLIM/2017-09-21 19-11-43.bin';
-const txtFile = '/media/luis/data/srm/ImagenesPruebas/logs/calatayud/convertedByLIM/2017-09-21 19-11-43.txt';
+// const binFile = '/media/luis/data/srm/ImagenesPruebas/logs/calatayud/convertedByLIM/2017-09-21 19-11-43.bin';
+// const txtFile = '/media/luis/data/srm/ImagenesPruebas/logs/calatayud/convertedByLIM/2017-09-21 19-11-43.txt';
+const binFile = '/media/luis/data/srm/ImagenesPruebas/logs/cantera2/2017-10-02 12-14-39.bin';
+const txtFile = '/media/luis/data/srm/ImagenesPruebas/logs/cantera2/2017-10-02 12-14-39.txt';
+
+
 const log = new MavlinkLogs.MavlinkLogs(binFile);
 console.log('Cominezo conversión de binario a texto');
 log.convertBinToTxt(binFile, txtFile);
