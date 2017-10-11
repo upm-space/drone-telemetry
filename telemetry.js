@@ -1,5 +1,5 @@
 const SerialPort = require('serialport'); // Libreria para comunicarse por el serial
-const mavlink = require('./mavlink/mavlink.js');// Libreria propia para comunicarse con mavlink
+const mavlink = require('./mavlink/mavlink-node.js');// Libreria propia para comunicarse con mavlink
 const fs = require('fs');
 const EventEmitter = require('events');
 const path = require('path');
@@ -48,38 +48,7 @@ class Telemetry extends EventEmitter {
     // MISSION_CURRENT
     // NAV_CONTROLLER_OUTPUT
     // VFR_HUD
-
-    m.heartbeatR.eventEmitter.on('data', (data) => {
-      this.emit('heartbeat', data);
-    });
-
-    m.sys_statusR.eventEmitter.on('data', (data) => {
-      this.emit('sys_status', data);
-    });
-    m.gps_raw_intR.eventEmitter.on('data', (data) => {
-      this.emit('gps_raw_int', data);
-    });
-
-    m.attitudeR.eventEmitter.on('data', (data) => {
-      this.emit('attitude', data);
-    });
-
-    m.mission_currentR.eventEmitter.on('data', (data) => {
-      this.emit('mission_current', data);
-    });
-
-    m.nav_controller_outputR.eventEmitter.on('data', (data) => {
-      this.emit('nav_controller_output', data);
-    });
-
-    m.vfr_hudR.eventEmitter.on('data', (data) => {
-      this.emit('vfr_hud', data);
-    });
-
-    m.command_ackR.eventEmitter.on('data', (data) => {
-      this.emit('command_ack', data);
-    });
-
+    m.activateListeners(this);
     //----------------------------------------
     m.on('logEntryRecibido', (listContador, numLogs, size) => {
       console.log(`Recibidos ${listContador} de ${numLogs}`);
@@ -244,8 +213,8 @@ class Telemetry extends EventEmitter {
   // TODO getLogList
   getLogList() {
     m.loglistContador = 0;
-    m.logrequestlist.createBuffer();
-    this.port.write(m.logrequestlist.buffer);
+    m.logRequestListReader.createBuffer();
+    this.port.write(m.logRequestListReader.buffer);
   }
 
   // TODO register event for each received log list item
