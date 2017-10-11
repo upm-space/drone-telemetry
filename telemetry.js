@@ -1,5 +1,5 @@
 const SerialPort = require('serialport'); // Libreria para comunicarse por el serial
-const mavlink = require('./mavlink/mavlink.js');// Libreria propia para comunicarse con mavlink
+const mavlink = require('./mavlink/mavlink-node.js');// Libreria propia para comunicarse con mavlink
 const fs = require('fs');
 const EventEmitter = require('events');
 const path = require('path');
@@ -49,37 +49,40 @@ class Telemetry extends EventEmitter {
     // NAV_CONTROLLER_OUTPUT
     // VFR_HUD
 
-    m.heartbeatR.eventEmitter.on('data', (data) => {
+    m.heartbeatReader.eventEmitter.on('data', (data) => {
       this.emit('heartbeat', data);
     });
 
-    m.sys_statusR.eventEmitter.on('data', (data) => {
+
+    m.sysStatusReader.eventEmitter.on('data', (data) => {
       this.emit('sys_status', data);
     });
-    m.gps_raw_intR.eventEmitter.on('data', (data) => {
+
+    /*
+    m.gpsRawIntReader.eventEmitter.on('data', (data) => {
       this.emit('gps_raw_int', data);
     });
-
-    m.attitudeR.eventEmitter.on('data', (data) => {
+*/
+    m.attitudeReader.eventEmitter.on('data', (data) => {
       this.emit('attitude', data);
     });
-
-    m.mission_currentR.eventEmitter.on('data', (data) => {
+    /*
+    m.missionCurrentReader.eventEmitter.on('data', (data) => {
       this.emit('mission_current', data);
     });
 
-    m.nav_controller_outputR.eventEmitter.on('data', (data) => {
+    m.navControllerOutputReader.eventEmitter.on('data', (data) => {
       this.emit('nav_controller_output', data);
     });
 
-    m.vfr_hudR.eventEmitter.on('data', (data) => {
+    m.vfrHudReader.eventEmitter.on('data', (data) => {
       this.emit('vfr_hud', data);
     });
 
-    m.command_ackR.eventEmitter.on('data', (data) => {
+    m.commandAckReader.eventEmitter.on('data', (data) => {
       this.emit('command_ack', data);
     });
-
+*/
     //----------------------------------------
     m.on('logEntryRecibido', (listContador, numLogs, size) => {
       console.log(`Recibidos ${listContador} de ${numLogs}`);
