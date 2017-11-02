@@ -103,7 +103,7 @@ class ${this.classNameSeed}Message {
         accumulated += item1.dataType.lengthArray; // multiplied by char length, which is 1
       } else {
         text += `    for (var i=0; i<${item1.dataType.lengthArray}; i += 1) {
-        this.data[i]=bufferIn.${item1.dataType.methodToRead}(i + ${accumulated});
+        this.data[i]=${item1.$.name}.${item1.dataType.methodToRead}(i + ${accumulated});
     }\n`;
         accumulated += item1.dataType.lengthType * item1.dataType.lengthArray;
       }
@@ -133,7 +133,7 @@ class ${this.classNameSeed}Message {
         if (item1.dataType.lengthType === 8) {
           // TODO: int64, uint64
         } else {
-          text += `    this.buffer.${item1.dataType.methodToRead}(this.${item1.$.name},${accumulated});\n`;
+          text += `    this.buffer.${item1.dataType.methodToWrite}(this.${item1.$.name},${accumulated});\n`;
           accumulated += item1.dataType.lengthType * item1.dataType.lengthArray;
         }
       } else if (item1.dataType.type === 'char') {
@@ -143,7 +143,7 @@ class ${this.classNameSeed}Message {
       }
     });
     text += '    this.buffer.copy(this.crc_buf, 0, 1, this.buffer[1] + 6);\n';
-    text += '    this.crc_buf[this.crc_buf.length - 1] = this.crcAttitude;\n';
+    text += `    this.crc_buf[this.crc_buf.length - 1] = this.crc${this.classNameSeed};\n`;
     text += '    this.crc = calculateChecksum(this.crc_buf);\n';
     text += '    this.buffer.writeUInt16LE(this.crc, this.buffer[1] + 6);\n';
     text = `\n  createBuffer() {\n${text}  }`;

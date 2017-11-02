@@ -14,6 +14,7 @@ let acumulado = 0;
 const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ port: 8080 });
+const logList = [];
 
 
 wss.on('connection', (ws) => {
@@ -32,6 +33,7 @@ wss.on('connection', (ws) => {
     }
 
     if (separar[0] == 'requestLogList') {
+      logList = [];
       telemetry.getLogList();
     }
 
@@ -62,6 +64,19 @@ wss.on('connection', (ws) => {
         if (msg.type === 'requestLogList') {
           telemetry.getLogList();
         }
+        if (msg.type === 'requestLog') {
+          let size = 0;
+          logList.forEach((item) => {
+            if (item.id === parseInt(msg.id)) {
+              size = item.size;
+            }
+          });
+          if (size > 0) {
+            telemetry.getLogFile(msg.id, size);
+          } else {
+            console.log('ERROR: No log file found');
+          }
+        }
       }
     } catch (error) {
       console.log(error);
@@ -80,12 +95,15 @@ wss.on('connection', (ws) => {
     ws.send(message);
   });
 
-  telemetry.on('logEntryRecibido', (listContador, numLogs, size) => {
+  // telemetry.on('logEntry', (listContador, numLogs, size) => {
+  telemetry.on('logEntry', (data) => {
     // console.log(data);
-    size = (size / 1024) / 1024; // converted from bytes to Mg
+    logList.push(data);
+    size = (data.size / 1024) / 1024; // converted from bytes to Mg
     size = size.toFixed(2);
-    const message = `${'logEntryRecibido' + ','}${listContador} (${size})Mb` + `,${numLogs}`;
+    // const message = `${'logEntryRecibido' + ','}${data.id} (${size})Mb` + `,${data.numLogs}`;
     acumulado = 0;
+    const message = `{"type":"itemLogList","data":${JSON.stringify(data)}}`;
     ws.send(message);
   });
 
@@ -105,4 +123,9 @@ wss.on('connection', (ws) => {
       ws.send(msg);
     }
   });
+  /*
+  telemetry.on('logData', (data) => {
+    console.log(data);
+  });
+  */
 });

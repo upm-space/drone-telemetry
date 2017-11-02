@@ -4,6 +4,7 @@ const fs = require('fs');
 const EventEmitter = require('events');
 const path = require('path');
 const MavlinkLogs = require('./utils/logs');
+const MavlinkLogfile = require('./mavlink/mavlink-logfile.js');
 
 
 const m = new mavlink();
@@ -13,6 +14,8 @@ class Telemetry extends EventEmitter {
     super();
     this.ws = null;
     this.connectionType = '';
+    this.logFile = new MavlinkLogfile();
+    m.activateListeners(this);
   }
 
   // created provisionally for CGET
@@ -48,13 +51,31 @@ class Telemetry extends EventEmitter {
     // MISSION_CURRENT
     // NAV_CONTROLLER_OUTPUT
     // VFR_HUD
-    m.activateListeners(this);
+    /* Listeners */
+    /*
+    this.on('logRequestData', (data) => {
+      console.log('Petición de log');
+      this.logFile.createBuffer(data.size);
+    });
+    this.on('logData', (data) => {
+      console.log('Petición de listado de log log');
+      this.logfile.fillinBuffer(data);
+    });
+    */
     //----------------------------------------
+    /*
     m.on('logEntryRecibido', (listContador, numLogs, size) => {
       console.log(`Recibidos ${listContador} de ${numLogs}`);
+      const msg = `{"id":${listContador},"total":${numlogs},"size":${size}}`;
+      logList.push(msg);
       this.emit('logEntryRecibido', listContador, numLogs, size);
     });
-
+*/
+    /*
+    m.on('attitude', (data) => {
+      this.emit('attitude', data);
+    });
+    */
     m.on('listaLogsRecibida', () => {
       console.log('Lista de logs recibida.');
     });
@@ -221,20 +242,21 @@ class Telemetry extends EventEmitter {
 
 
   // TODO getLogFile (params log number and file name)
-  getLogFile(id) {
-    m.logrequestdata.id = id;
+  getLogFile(id, size) {
+    m.logRequestDataReader.id = id;
     this.logID = id;
     const logentry = `log_entry${id}`;
     // const logname = `log${id}.bin`;
     // eval("var size = m." + logentry + ".size;");
-    m.createLogBuffer(m[logentry].size);
-
-    m.logsize = m[logentry].size;
+    // m.createLogBuffer(m[logentry].size);
+    m.createLogBuffer(size);
+    m.logsize = size;
     m.logoffset = 0;
-    m.logrequestdata.ofs = 0;
-    m.logrequestdata.count = m[logentry].size;
-    m.logrequestdata.createBuffer();
-    this.port.write(m.logrequestdata.buffer);
+    m.logRequestDataReader.ofs = 0;
+    m.logRequestDataReader.count = size;
+    m.logRequestDataReader.createBuffer();
+    this.port.write(m.logRequestDataReader.buffer);
+    console.log('getLogFile from telemetry');
   }
 
   // TODO register event for each received block file

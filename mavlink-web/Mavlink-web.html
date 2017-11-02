@@ -111,7 +111,7 @@
             document.getElementById("typetext").innerHTML = "Drone type: " + type;
 
         }
-
+/*
         if (separar[0] == 'logEntryRecibido'){
             document.getElementById("logtext").innerHTML = "Recibidos: " + separar[1] + " de " + separar[2];
             var x = document.getElementById("logs");
@@ -119,7 +119,7 @@
             option.text = "log_" + separar[1];
             x.add(option)
         }
-
+*/
         if (separar[0] == 'paqueteLog'){
             document.getElementById("logtext").innerHTML = "Recibidos: " + separar[1] + "/" + separar[2] + " bytes";
         }
@@ -138,6 +138,14 @@
                 }
                 if(msg.type == "message"){
                     document.getElementById("logtext").innerHTML = msg.msg;
+                }
+                if(msg.type == "itemLogList"){
+                  document.getElementById("logtext").innerHTML = "Recibidos: " + msg.data.id + " de " + msg.data.num_logs;
+                  var size = ((msg.data.size/1024)/1024).toFixed(2);
+                  var x = document.getElementById("logs");
+                  var option = document.createElement("option");
+                  option.text = "Nº " + msg.data.id + " : " + size + "Mb";
+                  x.add(option)
                 }
 
             }
@@ -182,11 +190,8 @@
 
     var requestLog = function(){
         var log = document.getElementById("logs").value;
-        console.log(log);
-
-        var logseparado = log.split("_");
-        logseparado = logseparado[1].split("(");
-        var message = "requestLog" + "," + logseparado[0].trim();
+        var id = log.split(" ")[1];
+        var message = "{\"type\":\"requestLog\" ,\"id\":\"" + id + "\"}";
         client.send(message);
     }
 
