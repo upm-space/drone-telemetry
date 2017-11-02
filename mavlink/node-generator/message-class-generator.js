@@ -86,18 +86,27 @@ class ${this.classNameSeed}Message {
     let text = '';
     let accumulated = 6;
     this.constructorFieldArray.forEach((item1) => {
+<<<<<<< HEAD
       text += '   try {\n';
       if (item1.dataType.lengthArray === 1) {
         if (item1.dataType.lengthType === 8) {
           text += `    var val1 = data.${item1.dataType.methodToRead}(${accumulated});\n`;
           accumulated += 4;
           text += `    var val2 = data.${item1.dataType.methodToRead}(${accumulated});\n`;
+=======
+      if (item1.dataType.lengthArray === 1) {
+        if (item1.dataType.lengthType === 8) {
+          text += `var val1 = data.${item1.dataType.methodToRead}(${accumulated});\n`;
+          accumulated += 4;
+          text += `var val2 = data.${item1.dataType.methodToRead}(${accumulated});\n`;
+>>>>>>> e2da954e22a3a3a333884f7afb9fb26e844dd5b9
           accumulated += 4;
           text += `    this.${item1.$.name} = (val1<<32) + (val2);\n`;
         } else {
           text += `    this.${item1.$.name} = data.${item1.dataType.methodToRead}(${accumulated});\n`;
           accumulated += item1.dataType.lengthType;
         }
+<<<<<<< HEAD
       } else if (item1.dataType.type === 'char') {
         text += `    this.${item1.$.name} = data.toString('ascii',${accumulated}, ${(accumulated + item1.dataType.lengthArray)});\n`;
         accumulated += item1.dataType.lengthArray; // multiplied by char length, which is 1
@@ -110,6 +119,15 @@ class ${this.classNameSeed}Message {
       text += '   }catch (e) {/*console.log(\'Tamaño de paquete excedido: \' + e)*/};\n';
     });
 
+=======
+      } else {
+        text += `    for (var i=0; i<${item1.dataType.lengthArray}; i += 1) {
+        this.data[i]=bufferIn.${item1.dataType.methodToRead}(i + ${accumulated});
+    }\n`;
+        accumulated += item1.dataType.lengthType * item1.dataType.lengthArray;
+      }
+    });
+>>>>>>> e2da954e22a3a3a333884f7afb9fb26e844dd5b9
     text += '    data.copy(this.buffer, 0, 0, this.buffer.length);\n';
     text += '    this.eventEmitter.emit(\'data\', this.getData());\n';
     text = `\n  read(data) {\n${text}  }`;
@@ -129,6 +147,7 @@ class ${this.classNameSeed}Message {
     text += '    this.buffer[4] = 1;\n';// ID of the SENDING component. Allows to differentiate different components of the same system, e.g. the IMU and the autopilot.
     text += `    this.buffer[5] = 0x${(+this.messajeObj.$.id).toString(16)};\n`; // ID of the message
     this.constructorFieldArray.forEach((item1) => {
+<<<<<<< HEAD
       if (item1.dataType.lengthArray === 1) {
         if (item1.dataType.lengthType === 8) {
           // TODO: int64, uint64
@@ -144,6 +163,13 @@ class ${this.classNameSeed}Message {
     });
     text += '    this.buffer.copy(this.crc_buf, 0, 1, this.buffer[1] + 6);\n';
     text += `    this.crc_buf[this.crc_buf.length - 1] = this.crc${this.classNameSeed};\n`;
+=======
+      text += `    this.buffer.${item1.dataType.methodToRead}(this.${item1.$.name},${accumulated});\n`;
+      accumulated += item1.dataType.lengthType * item1.dataType.lengthArray;
+    });
+    text += '    this.buffer.copy(this.crc_buf, 0, 1, this.buffer[1] + 6);\n';
+    text += '    this.crc_buf[this.crc_buf.length - 1] = this.crcAttitude;\n';
+>>>>>>> e2da954e22a3a3a333884f7afb9fb26e844dd5b9
     text += '    this.crc = calculateChecksum(this.crc_buf);\n';
     text += '    this.buffer.writeUInt16LE(this.crc, this.buffer[1] + 6);\n';
     text = `\n  createBuffer() {\n${text}  }`;

@@ -30,7 +30,14 @@ node examples/mavlink-serial-communication.js
 
 enjoy :-)
 
+<<<<<<< HEAD
 ## Usefull links
 
 [PX4 mavlink specification] (https://github.com/PX4/Firmware/tree/master/mavlink/include/mavlink)
 [PX4 firmware message specification] (https://github.com/mavlink/c_library_v1/tree/61a161e9d550df9d464f85ad47e3cf7b32d5bd94/common)
+=======
+https://github.com/PX4/Firmware/tree/master/mavlink/include/mavlink
+https://github.com/mavlink/c_library_v1/tree/61a161e9d550df9d464f85ad47e3cf7b32d5bd94/common
+
+https://github.com/ArduPilot/MissionPlanner/blob/master/ExtLibs/Mavlink/message_definitions/common.xml
+>>>>>>> e2da954e22a3a3a333884f7afb9fb26e844dd5b9
