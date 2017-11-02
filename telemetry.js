@@ -61,7 +61,7 @@ class Telemetry extends EventEmitter {
       console.log('Petición de listado de log log');
       this.logfile.fillinBuffer(data);
     });
-    */
+*/
     //----------------------------------------
     /*
     m.on('logEntryRecibido', (listContador, numLogs, size) => {
@@ -76,6 +76,7 @@ class Telemetry extends EventEmitter {
       this.emit('attitude', data);
     });
     */
+    /*
     m.on('listaLogsRecibida', () => {
       console.log('Lista de logs recibida.');
     });
@@ -84,7 +85,7 @@ class Telemetry extends EventEmitter {
       console.log(`Bytes recibidos: ${logbytes}/${logsize}`);
       this.emit('paqueteLog', logbytes, logsize);
     });
-
+    */
     m.on('logRecibido', (logID) => {
       console.log('Log recibido.');
       let dir = process.argv[1];
