@@ -3,7 +3,7 @@ const mavlink = require('./mavlink/mavlink-node.js');// Libreria propia para com
 const fs = require('fs');
 const EventEmitter = require('events');
 const path = require('path');
-const MavlinkLogs = require('./utils/logs');
+// const MavlinkLogs = require('./utils/logs');
 const MavlinkLogfile = require('./mavlink/mavlink-logfile.js');
 
 
@@ -33,18 +33,17 @@ class Telemetry extends EventEmitter {
    * @param {string} idLog  name of the log file without extension
    */
   setDirLogAndIdLog(dirLog, idLog) {
-    this.logFileDir = dirLog;
-    this.logFileId = idLog;
     this.logFile = new MavlinkLogfile();
     this.logFile.on('loadedLog', () => {
       console.log('loadedLog');
     });
-    // this.emit('camFileCreated', { camItems: this.arrCamFile.length });
+
     this.logFile.on('camFileCreated', (data) => {
       console.log(`Cam file created with ${data.camItems} items`);
     });
-    this.logFile.setPathAndFilename(this.logFileDir, this.logFileId);
+    this.logFile.setPathAndFilename(dirLog, idLog);
   }
+
   connectToMavLinkViaSerial(portName, bauds) {
     this.connectionType = 'mavLinkViaSerial';
 
@@ -77,8 +76,9 @@ class Telemetry extends EventEmitter {
     });
     */
     this.on('logData', (data) => {
-      console.log('Petición de listado de log log');
-      this.logFile.fillinBuffer(data.data, data.ofs, data.count);
+      if (this.logFile) {
+        this.logFile.fillinBuffer(data.data, data.ofs, data.count);
+      }
     });
 
     //----------------------------------------
@@ -168,48 +168,40 @@ class Telemetry extends EventEmitter {
       setMode = 0; // default Manual mode
       break;
     }
-    m.set_modeS.createBuffer(setMode);
-    this.port.write(m.set_modeS.buffer);
+
+    m.setModeReader.target_system = 1;
+    m.setModeReader.base_mode = 1;
+    m.setModeReader.custom_mode = setMode;
+    m.setModeReader.createBuffer();
+    this.port.write(m.setModeReader.buffer);
+
+    // m.set_modeS.createBuffer(setMode);
+    // this.port.write(m.set_modeS.buffer);
   }
 
 
   // TODO set arm
 
   setArm(boolvalue) {
-    if (boolvalue === 'arm') {
-      m.command_longS.param1 = 1;
-      m.command_longS.param2 = 0;
-      m.command_longS.param3 = 0;
-      m.command_longS.param4 = 0;
-      m.command_longS.param5 = 0;
-      m.command_longS.param6 = 0;
-      m.command_longS.param7 = 0;
-      m.command_longS.param7 = 0;
-      m.command_longS.command = 400;
-      m.command_longS.target_system = 1;
-      m.command_longS.target_component = 1;
-      m.command_longS.confirmation = 0;
-
-      m.command_longS.createBuffer();
-      this.port.write(m.command_longS.buffer);
+    if (boolvalue === true) {
+      m.commandLongReader.param1 = 1;
+    } else {
+      m.commandLongReader.param1 = 0;
     }
-    if (boolvalue === 'disarm') {
-      m.command_longS.param1 = 0;
-      m.command_longS.param2 = 0;
-      m.command_longS.param3 = 0;
-      m.command_longS.param4 = 0;
-      m.command_longS.param5 = 0;
-      m.command_longS.param6 = 0;
-      m.command_longS.param7 = 0;
-      m.command_longS.param7 = 0;
-      m.command_longS.command = 400;
-      m.command_longS.target_system = 1;
-      m.command_longS.target_component = 1;
-      m.command_longS.confirmation = 0;
+    m.commandLongReader.param2 = 0;
+    m.commandLongReader.param3 = 0;
+    m.commandLongReader.param4 = 0;
+    m.commandLongReader.param5 = 0;
+    m.commandLongReader.param6 = 0;
+    m.commandLongReader.param7 = 0;
+    m.commandLongReader.param7 = 0;
+    m.commandLongReader.command = 400;
+    m.commandLongReader.target_system = 1;
+    m.commandLongReader.target_component = 1;
+    m.commandLongReader.confirmation = 0;
 
-      m.command_longS.createBuffer();
-      this.port.write(m.command_longS.buffer);
-    }
+    m.commandLongReader.createBuffer();
+    this.port.write(m.commandLongReader.buffer);
   }
 
   // TODO send RTL

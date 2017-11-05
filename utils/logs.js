@@ -1,3 +1,4 @@
+/*
 const spawn = require('child_process').spawn;
 const fs = require('fs');
 const path = require('path');
@@ -95,3 +96,4 @@ class MavlinkLogs {
 }
 
 module.exports.MavlinkLogs = MavlinkLogs;
+*/

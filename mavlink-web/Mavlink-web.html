@@ -9,7 +9,7 @@
 <body>
 
 <div class="row">
-    <div class="column side">
+    <div class="column middle">
         <div>
             <select id="Bauds" size="1">
                 <option>115200</option>
@@ -20,6 +20,7 @@
             <button type="button" onclick="connect()">Connect</button>
         </div>
         <div>
+           <!--
             <p id="roll">Roll: 121</p>
             <p id="pitch">Pitch: 121</p>
             <p id="yaw">Yaw: 121</p>
@@ -27,9 +28,37 @@
             <p id="flightmodetext">Flight mode: </p>
             <p id="autopilottext">Autopilot: </p>
             <p id="typetext">Drone type: </p>
+          -->
+
+          <br><p>ATTITUDE</p>
+          <p id="pitchRead">pitchRead: 0</p>
+          <p id="rollRead">rollRead: 0</p>
+          <p id="yawRead">yawRead: 0</p>
+          <br><p>GPS</p>
+          <p id="altRead">altRead: 0</p>
+          <p id="lonRead">lonRead: 0</p>
+          <p id="latRead">latRead: 0</p>
+          <p id="signalType">signalType: 0</p>
+          <p id="speedRead">speedRead: 0</p>
+          <br><p>VFR</p>
+          <p id="airspeed">airspeed: 0</p>
+          <br><p>HEARTBEAT</p>
+          <p id="mode">mode: 0</p>
+          <br><p>SYS STATUS</p>
+          <p id="voltage">voltage: 0</p>
+          <p id="remaining">remaining: 0</p>
+          <p id="amper">amper: 0</p>
+          <br><p>CURRENT WP</p>
+          <p id="lastWp">lastWp: 0</p>
+          <br><p>NAV CONTROLLER</p>
+          <p id="distToWp">distToWp: 0</p>
         </div>
         <div>
+          <!--
             <button type="button" onclick="armDisarm()">Arm/Disarm</button>
+          -->
+            <button type="button" onclick="armDisarm(true)">Arm</button>
+            <button type="button" onclick="armDisarm(false)">Disarm</button>
         </div>
         <br>
         <div>
@@ -92,7 +121,7 @@
         //console.log(e.data);
         var mensaje = e.data;
         var separar = mensaje.split(",");
-        console.log(separar[0]);
+        //console.log(separar[0]);
         if (separar[0] == "attitude"){
             document.getElementById("roll").innerHTML = "Roll: " + separar[1];
             document.getElementById("pitch").innerHTML = "Pitch: " + separar[2];
@@ -126,7 +155,7 @@
 
         try{
             var msg = JSON.parse(mensaje);
-            console.log(msg.type)
+            //console.log(msg.type)
             if(msg.type){
                 if(msg.type == "ports"){
                     msg.ports.forEach((port)=>{
@@ -136,16 +165,21 @@
                         x.add(option);
                     })
                 }
+                if(msg.type == "mavlink"){
+                    manageMavlink(msg.data);
+                }
                 if(msg.type == "message"){
                     document.getElementById("logtext").innerHTML = msg.msg;
                 }
                 if(msg.type == "itemLogList"){
-                  document.getElementById("logtext").innerHTML = "Recibidos: " + msg.data.id + " de " + msg.data.num_logs;
-                  var size = ((msg.data.size/1024)/1024).toFixed(2);
+                  document.getElementById("logtext").innerHTML = "Recibidos: " + msg.id + " de " + msg.numLogs;
                   var x = document.getElementById("logs");
                   var option = document.createElement("option");
-                  option.text = "Nº " + msg.data.id + " : " + size + "Mb";
+                  option.text = "Nº " + msg.id + " : " + msg.MbSize + "Mb";
                   x.add(option)
+                }
+                if(msg.type=="logData"){
+                  document.getElementById("logtext").innerHTML = "Cargados: " + msg.ofset + " Mb del log Nº " + msg.id;
                 }
 
             }
@@ -155,7 +189,8 @@
 
     }
 
-    var armDisarm = function(){
+    var armDisarm = function(bool){
+        /*
         if (armdis == "Disarmed"){
             var message = "armDisarm,arm"
             client.send(message);
@@ -166,7 +201,9 @@
             client.send(message);
             armDis = "Disarmed";
             //document.getElementById("estatus").innerHTML = armdis;
-        }
+        }*/
+        var message = {type:"arm", "result": bool };
+        client.send(JSON.stringify(message));
     }
 
     var connect = function(){
@@ -178,8 +215,8 @@
 
     var setFlightMode = function(){
         var selFlightMode = document.getElementById("flightmodeselect").value;
-        var message = "setFlighMode" + "," + selFlightMode;
-        client.send(message);
+        var message = {"type":"setFlighMode", "flightMode":selFlightMode};
+        client.send(JSON.stringify(message));
     }
 
     var requestLogList = function(){
@@ -194,6 +231,114 @@
         var message = "{\"type\":\"requestLog\" ,\"id\":\"" + id + "\"}";
         client.send(message);
     }
+
+    var manageMavlink = function(data){
+      switch (data.parameter) {
+        case "ATTITUDE":
+          processAttitude(data);
+          break;
+        case "GPS_RAW_INT":
+          processGPS(data);
+          break;
+        case "VFR_HUD":
+          processVFR(data);
+          break;
+        case "HEARTBEAT":
+          processHeartbeat(data);
+          break;
+        case "SYS_STATUS":
+          processSysStatus(data);
+          break;
+        case "MISSION_CURRENT":
+          processCurrentWP(data);
+          break;
+        case "NAV_CONTROLLER_OUTPUT":
+          processNavController(data);
+        default:
+
+      }
+    }
+
+    var processAttitude = function(data){
+        var pitchRead = data.pitch;
+        var rollRead = data.roll;
+        var yawRead = data.yaw;
+        pitchRead = pitchRead * 180 / Math.PI;
+        rollRead = rollRead * 180 / Math.PI;
+        yawRead = yawRead * 180 / Math.PI;
+        document.getElementById("pitchRead").innerHTML = "pitchRead: " + pitchRead;
+        document.getElementById("rollRead").innerHTML = "rollRead: " + rollRead;
+        document.getElementById("yawRead").innerHTML = "yawRead: " + yawRead;
+    }
+    var processGPS = function(data){
+      var latRead = data.lat;
+      var lonRead = data.lon;
+      var altRead = data.alt;
+      var signalType = data.fix_type;  // importante para el tipo de recepción (no gps, 3dFix, etc)
+      var speedRead = data.vel;
+
+      altRead = altRead/1000;
+      lonRead = lonRead/10000000;
+      latRead = latRead/10000000;
+      speedRead = speedRead/100;
+
+      document.getElementById("altRead").innerHTML = "altRead: " + altRead;
+      document.getElementById("lonRead").innerHTML = "lonRead: " + lonRead;
+      document.getElementById("latRead").innerHTML = "latRead: " + latRead;
+      document.getElementById("signalType").innerHTML = "signalType: " + signalType;
+      document.getElementById("speedRead").innerHTML = "speedRead: " + speedRead;
+
+    }
+
+    var processVFR = function(data){
+      var airspeed = data.airspeed;
+      document.getElementById("airspeed").innerHTML = "airspeed: " + airspeed;
+
+    }
+
+    var processHeartbeat = function(data){
+      let mode  = 0;
+        //console.log(this.lastMessage);
+        if(data.base_mode==81 || data.base_mode==89){
+            mode = "disarmed";
+        } else if (data.custom_mode==5 && data.base_mode==209 ){
+            mode = "manual";
+        } else if (data.custom_mode==10 && data.base_mode==217){
+            mode = "auto";
+        } else if (data.custom_mode==15 && data.base_mode==217){
+            mode = "guided";
+        } else if (data.custom_mode==11 && data.base_mode==217){
+            mode = "rtl";
+        }
+        else {
+            mode = "unknown "+ data.base_mode;
+        }
+        document.getElementById("mode").innerHTML = "mode: " + mode;
+
+    }
+
+    var processSysStatus = function(data){
+      var voltage = (data.voltage_battery/1000).toFixed(1);
+      var remaining = data.battery_remaining;
+      var amper = (data.current_battery/100).toFixed(1);
+      document.getElementById("voltage").innerHTML = "voltage: " + voltage;
+      document.getElementById("remaining").innerHTML = "remaining: " + remaining;
+      document.getElementById("amper").innerHTML = "amper: " + amper;
+    }
+
+    var processCurrentWP = function(data){
+      var lastWp = data.seq;
+      document.getElementById("lastWp").innerHTML = "lastWp: " + lastWp;
+
+    }
+
+    var processNavController = function(data){
+      var distToWp = data.wp_dist;
+      document.getElementById("distToWp").innerHTML = "distToWp: " + distToWp;
+
+    }
+
+
 
 </script>
 
