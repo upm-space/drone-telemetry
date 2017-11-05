@@ -14,7 +14,7 @@ class Telemetry extends EventEmitter {
     super();
     this.ws = null;
     this.connectionType = '';
-    this.logFile = new MavlinkLogfile();
+
     m.activateListeners(this);
   }
 
@@ -27,6 +27,24 @@ class Telemetry extends EventEmitter {
     // GPS_RAW_INT
   }
 
+  /**
+   * setter for class atributes that will be used for MavlinkLogfile class
+   * @param {string} dirLog absolute dir dor storing log files
+   * @param {string} idLog  name of the log file without extension
+   */
+  setDirLogAndIdLog(dirLog, idLog) {
+    this.logFileDir = dirLog;
+    this.logFileId = idLog;
+    this.logFile = new MavlinkLogfile();
+    this.logFile.on('loadedLog', () => {
+      console.log('loadedLog');
+    });
+    // this.emit('camFileCreated', { camItems: this.arrCamFile.length });
+    this.logFile.on('camFileCreated', (data) => {
+      console.log(`Cam file created with ${data.camItems} items`);
+    });
+    this.logFile.setPathAndFilename(this.logFileDir, this.logFileId);
+  }
   connectToMavLinkViaSerial(portName, bauds) {
     this.connectionType = 'mavLinkViaSerial';
 
@@ -57,11 +75,12 @@ class Telemetry extends EventEmitter {
       console.log('Petición de log');
       this.logFile.createBuffer(data.size);
     });
+    */
     this.on('logData', (data) => {
       console.log('Petición de listado de log log');
-      this.logfile.fillinBuffer(data);
+      this.logFile.fillinBuffer(data.data, data.ofs, data.count);
     });
-*/
+
     //----------------------------------------
     /*
     m.on('logEntryRecibido', (listContador, numLogs, size) => {
@@ -86,6 +105,7 @@ class Telemetry extends EventEmitter {
       this.emit('paqueteLog', logbytes, logsize);
     });
     */
+    /*
     m.on('logRecibido', (logID) => {
       console.log('Log recibido.');
       let dir = process.argv[1];
@@ -114,6 +134,7 @@ class Telemetry extends EventEmitter {
         this.ws.send(msg);
       }, 2000);
     });
+    */
   }
 
   closeConnection() {
@@ -250,6 +271,10 @@ class Telemetry extends EventEmitter {
     // const logname = `log${id}.bin`;
     // eval("var size = m." + logentry + ".size;");
     // m.createLogBuffer(m[logentry].size);
+    /* LIM */
+    this.logFile.createBuffer(size);
+    /* LIM */
+
     m.createLogBuffer(size);
     m.logsize = size;
     m.logoffset = 0;

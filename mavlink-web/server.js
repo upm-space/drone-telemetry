@@ -72,6 +72,7 @@ wss.on('connection', (ws) => {
             }
           });
           if (size > 0) {
+            telemetry.setDirLogAndIdLog('/media/luis/data/basura/mavlink/log', msg.id);
             telemetry.getLogFile(msg.id, size);
           } else {
             console.log('ERROR: No log file found');
