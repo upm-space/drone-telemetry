@@ -13,17 +13,19 @@ class MavlinkLogfile extends EventEmitter {
     this.logbytes = 0;
     this.segmentsWithErrors = [];
     this.arrCamFile = [];
+    this.idLog = '';
     this.logDir = ''; // path where we will store the logs
     this.binFile = ''; // bin file downloaded from autopilot
     this.textFile = ''; // text file converted from bin file
     this.camFile = ''; // CAM items from text file in csv format
   }
 
-  setPathAndFilename(logDir, fileName) {
+  setPathAndFilename(logDir, idLog) {
     this.logDir = logDir;
-    this.binFile = path.join(logDir, `${fileName}.bin`);
-    this.textFile = path.join(logDir, `${fileName}.txt`);
-    this.camFile = path.join(logDir, `${fileName}_CAM.txt`);
+    this.idLog = idLog;
+    this.binFile = path.join(logDir, `${idLog}.bin`);
+    this.textFile = path.join(logDir, `${idLog}.txt`);
+    this.camFile = path.join(logDir, `${idLog}_CAM.txt`);
 
     if (fs.existsSync(this.binFile)) {
       fs.unlinkSync(this.binFile);
@@ -54,6 +56,7 @@ class MavlinkLogfile extends EventEmitter {
       this.emit('loadedLog');
       this.storeBuffer(() => {
         this.convertBinToTxt(() => {
+          this.emit('convertedBinToTxt', { id: this.idLog });
           this.processLogFileToGetCAM();
         });
       });

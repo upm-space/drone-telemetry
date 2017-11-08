@@ -12,13 +12,15 @@ const m = new mavlink();
 class Telemetry extends EventEmitter {
   constructor() {
     super();
-    this.ws = null;
+    // this.ws = null;
+    this.connected = false;
     this.connectionType = '';
 
     m.activateListeners(this);
   }
 
   // created provisionally for CGET
+  /*
   setWs(ws) {
     this.ws = ws;
     // TODO events to register
@@ -26,7 +28,7 @@ class Telemetry extends EventEmitter {
     // SYS_STATUS
     // GPS_RAW_INT
   }
-
+*/
   /**
    * setter for class atributes that will be used for MavlinkLogfile class
    * @param {string} dirLog absolute dir dor storing log files
@@ -37,7 +39,9 @@ class Telemetry extends EventEmitter {
     this.logFile.on('loadedLog', () => {
       console.log('loadedLog');
     });
-
+    this.logFile.on('convertedBinToTxt',(data)=>{
+      this.emit('convertedBinToTxt',data);
+    })
     this.logFile.on('camFileCreated', (data) => {
       console.log(`Cam file created with ${data.camItems} items`);
     });
@@ -51,12 +55,17 @@ class Telemetry extends EventEmitter {
       baudrate: bauds,
     });
     this.port.on('open', () => {
+      this.connected = true;
       // Lee cada nuevo buffer que llega
       this.port.on('data', (data) => {
         m.readBuffer(data);
       });
     });
     this.activateMavlinkSerialListeners();
+  }
+
+  checkConnection() {
+    return (this.connected);
   }
 
   activateMavlinkSerialListeners() {

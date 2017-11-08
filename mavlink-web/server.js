@@ -16,9 +16,28 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 const logList = [];
 
+const getPorts = (callback) => {
+  const arrports = [];
+  port.list((ports) => {
+    ports.forEach((port) => {
+      arrports.push({ portName: port.comName });
+    });
+    callback({ type: 'ports', ports: arrports });
+    // msg = JSON.stringify(msg);
+    // ws.send(msg);
+  });
+};
+
+const sendWsMessage = (msg) => {
+  wss.clients.forEach((client) => {
+    // if (client !== ws && client.readyState === WebSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(msg);
+    }
+  });
+};
 
 wss.on('connection', (ws) => {
-  telemetry.setWs(ws);
   ws.on('message', (message) => {
     console.log('received: %s', message);
     const mensaje = message;
@@ -29,8 +48,14 @@ wss.on('connection', (ws) => {
       console.log(msg.type);
       if (msg.type) {
         if (msg.type === 'connect') {
-          console.log(msg.bauds);
-          telemetry.connectToMavLinkViaSerial(msg.port, msg.bauds);
+          if (telemetry.checkConnection()) {
+            sendWsMessage(JSON.stringify({ type: 'connStatus', status: true, ports: [] }));
+          } else if (msg.port && msg.bauds) {
+            telemetry.connectToMavLinkViaSerial(msg.port, msg.bauds);
+            sendWsMessage(JSON.stringify({ type: 'connStatus', status: true }));
+          } else {
+            getPorts((data) => { sendWsMessage(JSON.stringify({ type: 'connStatus', status: false, ports: data })); });
+          }
         }
 
         if (msg.type === 'arm') {
@@ -40,17 +65,7 @@ wss.on('connection', (ws) => {
           telemetry.setFlightMode(msg.flightMode);
         }
         if (msg.type === 'getPorts') {
-          const arrports = [];
-          port.list((ports) => {
-            ports.forEach((port) => {
-              arrports.push({ portName: port.comName });
-            });
-            let msg = { type: 'ports', ports: arrports };
-            msg = JSON.stringify(msg);
-            ws.send(msg);
-          });
-          // console.log(msg.bauds);
-          // telemetry.connectToMavLinkViaSerial(msg.port,msg.bauds);
+          getPorts((data) => { sendWsMessage(JSON.stringify({ type: 'ports', ports: data })); });
         }
         if (msg.type === 'requestLogList') {
           telemetry.getLogList();
@@ -75,40 +90,34 @@ wss.on('connection', (ws) => {
     }
   });
 
-  /*
+
   telemetry.on('attitude', (data) => {
-    // console.log(data.roll);
-    const message = `${'attitude' + ','}${(data.roll * 180 / 3.14159).toFixed(2)},${(data.pitch * 180 / 3.14159).toFixed(2)},${(data.yaw * 180 / 3.14159).toFixed(2)}`;
-    ws.send(message);
-  });
-  */
-  telemetry.on('attitude', (data) => {
-    ws.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+    // ws.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+    /* wss.clients.forEach((client) => {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
+        client.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+      }
+    }); */
+    sendWsMessage(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
   });
   telemetry.on('gpsRawInt', (data) => {
-    ws.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+    sendWsMessage(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
   });
   telemetry.on('vfrHud', (data) => {
-    ws.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+    sendWsMessage(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
   });
-  /*
+
   telemetry.on('heartbeat', (data) => {
-    // console.log(data);
-    const message = `${'heartbeat' + ','}${data.armDisarm},${data.flightMode},${data.mav_autopilot},${data.mav_type}`;
-    ws.send(message);
-  });
-  */
-  telemetry.on('heartbeat', (data) => {
-    ws.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+    sendWsMessage(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
   });
   telemetry.on('sysStatus', (data) => {
-    ws.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+    sendWsMessage(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
   });
   telemetry.on('missionCurrent', (data) => {
-    ws.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+    sendWsMessage(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
   });
   telemetry.on('navControllerOutput', (data) => {
-    ws.send(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
+    sendWsMessage(`{"type":"mavlink","data":${JSON.stringify(data)}}`);
   });
 
   telemetry.on('logEntry', (data) => {
@@ -119,7 +128,7 @@ wss.on('connection', (ws) => {
     acumulado = 0;
     // const message = `{"type":"itemLogList","data":${JSON.stringify(data)}}`;
     const message = `{"type":"itemLogList","id":${data.id},"numLogs":${data.num_logs},"MbSize":${size}}`;
-    ws.send(message);
+    sendWsMessage(message);
   });
 
   telemetry.on('logData', (data) => {
@@ -128,8 +137,12 @@ wss.on('connection', (ws) => {
       acumulado = 0;
       const ofset = ((data.ofs / 1024) / 1024).toFixed(2);
       const message = `{"type":"logData","ofset":${ofset},"id":${data.id}}`;
-      ws.send(message);
+      sendWsMessage(message);
     }
+  });
+  telemetry.on('convertedBinToTxt', (data) => {
+    const message = `{"type":"logConverted","id":${data.id}}`;
+    sendWsMessage(message);
   });
   /*
   telemetry.on('paqueteLog', (logbytes, logsize) => {

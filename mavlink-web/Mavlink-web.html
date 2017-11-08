@@ -18,6 +18,7 @@
             <select id="AvailablePorts" size="1">
             </select>
             <button type="button" onclick="connect()">Connect</button>
+            <button type="button" onclick="disConnect()">Connect</button>
         </div>
         <div>
            <!--
@@ -111,6 +112,7 @@
     client.onopen = function () {
         console.log('WebSocket Client Connected');
         var message = {type:"getPorts"};
+        // var message = {type:"connect"};
         client.send(JSON.stringify(message));
     }
 
@@ -118,47 +120,15 @@
         console.log('Client Closed');
     }
     client.onmessage = function (e) {
-        //console.log(e.data);
         var mensaje = e.data;
-        var separar = mensaje.split(",");
-        //console.log(separar[0]);
-        if (separar[0] == "attitude"){
-            document.getElementById("roll").innerHTML = "Roll: " + separar[1];
-            document.getElementById("pitch").innerHTML = "Pitch: " + separar[2];
-            document.getElementById("yaw").innerHTML = "Yaw: " + separar[3];
-        }
-        if (separar[0] == "heartbeat"){
-            armdis = separar[1];
-            flightMode = separar[2];
-            autopilot = separar[3];
-            type = separar[4];
 
-
-            document.getElementById("estatus").innerHTML = armdis;
-            document.getElementById("flightmodetext").innerHTML = "Flight mode: " + flightMode;
-            document.getElementById("autopilottext").innerHTML = "Autopilot: " + autopilot;
-            document.getElementById("typetext").innerHTML = "Drone type: " + type;
-
-        }
-/*
-        if (separar[0] == 'logEntryRecibido'){
-            document.getElementById("logtext").innerHTML = "Recibidos: " + separar[1] + " de " + separar[2];
-            var x = document.getElementById("logs");
-            var option = document.createElement("option");
-            option.text = "log_" + separar[1];
-            x.add(option)
-        }
-*/
-        if (separar[0] == 'paqueteLog'){
-            document.getElementById("logtext").innerHTML = "Recibidos: " + separar[1] + "/" + separar[2] + " bytes";
-        }
 
         try{
             var msg = JSON.parse(mensaje);
             //console.log(msg.type)
             if(msg.type){
                 if(msg.type == "ports"){
-                    msg.ports.forEach((port)=>{
+                    msg.ports.ports.forEach((port)=>{
                         var x = document.getElementById("AvailablePorts");
                         var option = document.createElement("option");
                         option.text = port.portName;
@@ -211,6 +181,10 @@
         var port = document.getElementById("AvailablePorts").value;
         var message = {type:"connect", bauds:bauds,port:port};
         client.send(JSON.stringify(message));
+    }
+
+    var disConnect = function(){
+      client.close();
     }
 
     var setFlightMode = function(){
