@@ -52,6 +52,7 @@ wss.on('connection', (ws) => {
             sendWsMessage(JSON.stringify({ type: 'connStatus', status: true, ports: [] }));
           } else if (msg.port && msg.bauds) {
             telemetry.connectToMavLinkViaSerial(msg.port, msg.bauds);
+            // telemetry.connectToMavLinkViaIP();
             sendWsMessage(JSON.stringify({ type: 'connStatus', status: true }));
           } else {
             getPorts((data) => { sendWsMessage(JSON.stringify({ type: 'connStatus', status: false, ports: data })); });
@@ -83,6 +84,12 @@ wss.on('connection', (ws) => {
           } else {
             console.log('ERROR: No log file found');
           }
+        }
+        if (msg.type === 'askForWpList') {
+          telemetry.getWaypoints();
+        }
+        if (msg.type === 'askForWp') {
+          telemetry.getWaypoint(parseInt(msg.seq));
         }
       }
     } catch (error) {
@@ -143,6 +150,13 @@ wss.on('connection', (ws) => {
   telemetry.on('convertedBinToTxt', (data) => {
     const message = `{"type":"logConverted","id":${data.id}}`;
     sendWsMessage(message);
+  });
+  telemetry.on('missionCount', (data) => {
+    console.log('missionCount');
+  });
+
+  telemetry.on('missionItemInt', (data) => {
+    console.log('missionItemInt');
   });
   /*
   telemetry.on('paqueteLog', (logbytes, logsize) => {

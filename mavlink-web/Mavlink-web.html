@@ -18,7 +18,10 @@
             <select id="AvailablePorts" size="1">
             </select>
             <button type="button" onclick="connect()">Connect</button>
-            <button type="button" onclick="disConnect()">Connect</button>
+            <button type="button" onclick="disConnect()">Disconnect</button><br>
+            <button type="button" onclick="askForWpList()">AskForWayPoints</button><br>
+            <button type="button" onclick="askForWp()">AskForAWayPoints</button>
+            <input type="number" id="wpNumber" />
         </div>
         <div>
            <!--
@@ -175,6 +178,18 @@
         var message = {type:"arm", "result": bool };
         client.send(JSON.stringify(message));
     }
+
+    var askForWpList = function(){
+      var message = {type:"askForWpList"};
+      client.send(JSON.stringify(message));
+    }
+
+    var askForWp = function(){
+      var number = document.getElementById('wpNumber').value;
+      var message = {type:"askForWp", seq: number};
+      client.send(JSON.stringify(message));
+    }
+
 
     var connect = function(){
         var bauds = document.getElementById("Bauds").value;

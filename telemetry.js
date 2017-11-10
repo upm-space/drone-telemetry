@@ -8,6 +8,9 @@ const MavlinkLogfile = require('./mavlink/mavlink-logfile.js');
 
 
 const m = new mavlink();
+const WebSocket = require('ws');
+
+const wst = new WebSocket.Server({ port: 14550 });
 
 class Telemetry extends EventEmitter {
   constructor() {
@@ -39,9 +42,9 @@ class Telemetry extends EventEmitter {
     this.logFile.on('loadedLog', () => {
       console.log('loadedLog');
     });
-    this.logFile.on('convertedBinToTxt',(data)=>{
-      this.emit('convertedBinToTxt',data);
-    })
+    this.logFile.on('convertedBinToTxt', (data) => {
+      this.emit('convertedBinToTxt', data);
+    });
     this.logFile.on('camFileCreated', (data) => {
       console.log(`Cam file created with ${data.camItems} items`);
     });
@@ -49,8 +52,8 @@ class Telemetry extends EventEmitter {
   }
 
   connectToMavLinkViaSerial(portName, bauds) {
+    /** serial connectio */
     this.connectionType = 'mavLinkViaSerial';
-
     this.port = new SerialPort(portName, {
       baudrate: bauds,
     });
@@ -61,7 +64,35 @@ class Telemetry extends EventEmitter {
         m.readBuffer(data);
       });
     });
+
+
     this.activateMavlinkSerialListeners();
+  }
+
+  connectToMavLinkViaIP() {
+    /** lectura por ip */
+    this.connectionType = 'mavLinkViaIP';
+    wst.on('connection', (ws) => {
+      ws.on('message', (message) => {
+        m.readBuffer(data);
+      });
+    });
+    this.activateMavlinkSerialListeners();
+  }
+
+  sendRawMessage(buffer) {
+    if (this.connectionType === 'mavLinkViaSerial') {
+      /** lectura por serial */
+      this.port.write(buffer);
+    }
+    if (this.connectionType === 'mavLinkViaIP') {
+    /** lectura por ip */
+      wst.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(msg);
+        }
+      });
+    }
   }
 
   checkConnection() {
@@ -182,7 +213,7 @@ class Telemetry extends EventEmitter {
     m.setModeReader.base_mode = 1;
     m.setModeReader.custom_mode = setMode;
     m.setModeReader.createBuffer();
-    this.port.write(m.setModeReader.buffer);
+    this.sendRawMessage(m.setModeReader.buffer);
 
     // m.set_modeS.createBuffer(setMode);
     // this.port.write(m.set_modeS.buffer);
@@ -210,7 +241,7 @@ class Telemetry extends EventEmitter {
     m.commandLongReader.confirmation = 0;
 
     m.commandLongReader.createBuffer();
-    this.port.write(m.commandLongReader.buffer);
+    this.sendRawMessage(m.commandLongReader.buffer);
   }
 
   // TODO send RTL
@@ -240,7 +271,21 @@ class Telemetry extends EventEmitter {
   // TODO get waypoints
 
   getWaypoints() {
+    m.missionRequestListReader.target_system = 0;
+    m.missionRequestListReader.target_component = 1;
+    m.missionRequestListReader.mission_type = 0;
+    m.missionRequestListReader.createBuffer();
+    this.sendRawMessage(m.missionRequestListReader.buffer);
+  }
 
+  getWaypoint(seq) {
+    m.missionRequestIntReader.target_system = 0;
+    m.missionRequestIntReader.target_component = 1;
+    m.missionRequestIntReader.seq = seq;
+    // m.missionRequestIntReader.crc = 34516;
+    // m.missionRequestIntReader.crc = 47186;
+    m.missionRequestIntReader.createBuffer();
+    this.sendRawMessage(m.missionRequestIntReader.buffer);
   }
 
   // TODO register event when receive a wp
@@ -258,7 +303,7 @@ class Telemetry extends EventEmitter {
   getLogList() {
     m.loglistContador = 0;
     m.logRequestListReader.createBuffer();
-    this.port.write(m.logRequestListReader.buffer);
+    this.sendRawMessage(m.logRequestListReader.buffer);
   }
 
   // TODO register event for each received log list item
@@ -282,9 +327,10 @@ class Telemetry extends EventEmitter {
     m.logRequestDataReader.ofs = 0;
     m.logRequestDataReader.count = size;
     m.logRequestDataReader.createBuffer();
-    this.port.write(m.logRequestDataReader.buffer);
+    this.sendRawMessage(m.logRequestDataReader.buffer);
     console.log('getLogFile from telemetry');
   }
+
 
   // TODO register event for each received block file
 }
