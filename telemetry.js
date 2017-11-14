@@ -75,6 +75,7 @@ class Telemetry extends EventEmitter {
     wst.on('connection', (ws) => {
       ws.on('message', (message) => {
         m.readBuffer(data);
+        console.log(data);
       });
     });
     this.activateMavlinkSerialListeners();
@@ -88,7 +89,8 @@ class Telemetry extends EventEmitter {
     if (this.connectionType === 'mavLinkViaIP') {
     /** lectura por ip */
       wst.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+        // if (client.readyState === WebSocket.OPEN) {
           client.send(msg);
         }
       });

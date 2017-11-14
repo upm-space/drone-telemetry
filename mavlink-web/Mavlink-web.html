@@ -18,6 +18,7 @@
             <select id="AvailablePorts" size="1">
             </select>
             <button type="button" onclick="connect()">Connect</button>
+            <button type="button" onclick="connectIP()">Connect IP</button>
             <button type="button" onclick="disConnect()">Disconnect</button><br>
             <button type="button" onclick="askForWpList()">AskForWayPoints</button><br>
             <button type="button" onclick="askForWp()">AskForAWayPoints</button>
@@ -195,6 +196,11 @@
         var bauds = document.getElementById("Bauds").value;
         var port = document.getElementById("AvailablePorts").value;
         var message = {type:"connect", bauds:bauds,port:port};
+        client.send(JSON.stringify(message));
+    }
+
+    var connectIP = function(){
+        var message = {type:"connectIP"};
         client.send(JSON.stringify(message));
     }
 
