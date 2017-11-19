@@ -37,6 +37,7 @@ class MavlinkMessageGenerator {
    * the array is empty it will incorporate all the messages
    */
   generateMessagesSet(idArr) {
+    console.log(`generating message${idArr} `);
     this.readXmlFile((xmlObj) => {
       const folderName = this.buildFolder(xmlObj);
       xmlObj.mavlink.messages[0].message.forEach((msg) => {
@@ -44,7 +45,6 @@ class MavlinkMessageGenerator {
           this.createMessage(folderName, msg);
         } else if (idArr.includes(msg.$.id)) {
           this.createMessage(folderName, msg);
-
         }
       });
       this.buildMavlinkClass(xmlObj);
@@ -52,6 +52,7 @@ class MavlinkMessageGenerator {
   }
 
   createMessage(folderName, msg) {
+    console.log(`Destination folder ${folderName}. Message Id${msg}`);
     const generator = new MessageClassGenerator.MessageClassGenerator(msg);
     this.messagesSet.push(generator);
     const stringClass = generator.returnClassString();
@@ -70,6 +71,7 @@ class MavlinkMessageGenerator {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, '0777');
     }
+    console.log(`Folder destination 1 ${dir}`);
     return dir;
   }
 

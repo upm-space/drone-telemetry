@@ -1,3 +1,5 @@
+/* eslint-disable prefer-numeric-literals */
+
 const SerialPort = require('serialport'); // Libreria para comunicarse por el serial
 const mavlink = require('./mavlink/mavlink-node.js');// Libreria propia para comunicarse con mavlink
 const fs = require('fs');
@@ -5,6 +7,7 @@ const EventEmitter = require('events');
 const path = require('path');
 // const MavlinkLogs = require('./utils/logs');
 const MavlinkLogfile = require('./mavlink/mavlink-logfile.js');
+const MavlinkWP = require('./mavlink/mavlink-wp.js');
 
 
 const m = new mavlink();
@@ -51,6 +54,105 @@ class Telemetry extends EventEmitter {
     this.logFile.setPathAndFilename(dirLog, idLog);
   }
 
+  setWpManager() {
+    this.wpManager = new MavlinkWP.MavlinkWP();
+  }
+
+  manageWp(i) {
+    let counter = 0;
+    const maxIterations = 10;
+    const inter = setInterval(() => {
+      const wp = this.wpManager.getCurrentWp();
+      if (i > wp) {
+        console.log(`${wp} Conseguido al intento ${counter}`);
+        clearInterval(inter);
+        this.getWaypoint(i);
+      }
+      if (counter === maxIterations) {
+        console.log(`${wp} no conseguido en 10 intentos`);
+        clearInterval(inter);
+      }
+      counter += 1;
+    }, 2000);
+  }
+  askForWps() {
+    if (this.wpManager) {
+      const currWp = -1;
+      this.wpManager.setCurrentWp(-1);
+      const wpsInAutopilot = this.wpManager.getWpsInAutopilot();
+
+
+      const maximumIteraction = 500;
+      let counter = 0;
+      let i = 0;
+      this.getWaypoint(0);
+      const inter = setInterval(() => {
+        i += 1;
+        if (this.wpManager.getCurrentWp() > currWp) {
+          counter += 1;
+          console.log(`number of tries: ${i}`);
+          this.getWaypoint(counter);
+        } else {
+          console.log(`loop outside of tries: ${i}`);
+        }
+
+        if (i > maximumIteraction) { // avoid infinite loop
+          clearInterval(inter);
+          this.emit('downloadedWps', { finished: false, totalDownloaded:counter -1 , totalInAutopilot: wpsInAutopilot, tries: i });
+        }
+        if (counter > wpsInAutopilot) {
+          clearInterval(inter);
+          this.emit('downloadedWps', { finished: true, totalDownloaded:counter -1, totalInAutopilot: wpsInAutopilot, tries: i });
+        }
+      }, 50);
+
+
+      // for (i = 0; i < this.wpManager.getWpsInAutopilot(); i += 1) {
+      //  this.manageWp(i);
+        /*
+        let counter = 0;
+        const maxIterations = 10;
+        const inter = setInterval(() => {
+
+          const wp = this.wpManager.getCurrentWp();
+          if (i > wp) {
+            console.log(`${currWp} Conseguido al intento ${counter}`);
+            clearInterval(inter);
+            this.getWaypoint(i);
+          }
+          if (counter === maxIterations) {
+            console.log(`${currWp} no conseguido en 10 intentos`);
+            clearInterval(inter);
+          }
+          counter += 1;
+        }, 2000);
+        */
+      // }
+      // setTimeout(() => { this.getWaypoint(0); }, 2000);
+      /*
+      const maximumIteraction = 100;
+      let counter = 0;
+
+      const inter = setInterval(() => {
+        this.wpManager.setCurrentWp(-1);
+        let currWp = 0;
+        if (currWp > this.wpManager.getCurrentWp()) {
+          if (this.wpManager.getWpsInAutopilot() > this.wpManager.getCurrentWp()) {
+            this.getWaypoint(currWp);
+            currWp = this.wpManager.getCurrentWp();
+          } else { // hemos llegado al final;
+            clearInterval(inter);
+          }
+        }
+        counter += 1;
+        if (counter === maximumIteraction) {
+          clearInterval(inter);
+        }
+      }, 600);
+      */
+    }
+  }
+
   connectToMavLinkViaSerial(portName, bauds) {
     /** serial connectio */
     this.connectionType = 'mavLinkViaSerial';
@@ -89,9 +191,9 @@ class Telemetry extends EventEmitter {
     if (this.connectionType === 'mavLinkViaIP') {
     /** lectura por ip */
       wst.clients.forEach((client) => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-        // if (client.readyState === WebSocket.OPEN) {
-          client.send(msg);
+        // if (client !== ws && client.readyState === WebSocket.OPEN) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(buffer);
         }
       });
     }
@@ -273,21 +375,86 @@ class Telemetry extends EventEmitter {
   // TODO get waypoints
 
   getWaypoints() {
-    m.missionRequestListReader.target_system = 0;
-    m.missionRequestListReader.target_component = 1;
-    m.missionRequestListReader.mission_type = 0;
-    m.missionRequestListReader.createBuffer();
-    this.sendRawMessage(m.missionRequestListReader.buffer);
+    // La creación del buffer no funciona correctamente, lo hacemos manualmente
+    // m.missionRequestListReader.target_system = 0;
+    // m.missionRequestListReader.target_component = 1;
+    // m.missionRequestListReader.mission_type = 0;
+    // m.missionRequestListReader.createBuffer();
+    // this.sendRawMessage(m.missionRequestListReader.buffer);
+
+    const buff = new Buffer([254, 2, 67, 255, 190, 43, 1, 1, 243, 20]);
+    this.sendRawMessage(buff);
   }
 
   getWaypoint(seq) {
-    m.missionRequestIntReader.target_system = 0;
-    m.missionRequestIntReader.target_component = 1;
+    // hemos procedido a sustituir todo el buffer del objeto
+    // m.missionRequestIntReader. No hemos llamado a la funcion
+    // createBuffer, sino que la hemos creado nosotros. Dicha
+    // función no funciona correctamente
+    /*
+    m.missionRequestIntReader.buffer = new Buffer(12);
+    m.missionRequestIntReader.crc_buf = new Buffer(10);
+    m.missionRequestIntReader.buffer[0] = 0xfe;
+    m.missionRequestIntReader.buffer[1] = 4;
+    m.missionRequestIntReader.buffer[2] = 243;
+    m.missionRequestIntReader.buffer[3] = 255;
+    m.missionRequestIntReader.buffer[4] = 190;
+    m.missionRequestIntReader.buffer[5] = 0x33;
+    m.missionRequestIntReader.buffer[6] = seq;
+    m.missionRequestIntReader.buffer[7] = 0;
+    m.missionRequestIntReader.buffer[8] = 1;
+    m.missionRequestIntReader.buffer[9] = 1;
+    // m.missionRequestIntReader.buffer[10] = 219;
+    // m.missionRequestIntReader.buffer[11] = 252;
+*/
+    /*
+    m.missionRequestIntReader.buffer.copy(
+      m.missionRequestIntReader.crc_buf, 0, 1,
+      m.missionRequestIntReader.buffer[1] + 6);
+
+    m.missionRequestIntReader.buffer.copy(
+      m.missionRequestIntReader.crc_buf, 0, 0,
+      10);
+
+    m.missionRequestIntReader.crc_buf[
+      m.missionRequestIntReader.crc_buf.length - 1] =
+      m.missionRequestIntReader.crcMissionRequestInt;
+*/
+    /*
+    m.missionRequestIntReader.crc =
+      this.calculateChecksum(m.missionRequestIntReader.crc_buf);
+
+    m.missionRequestIntReader.buffer.writeUInt16LE(
+      m.missionRequestIntReader.crc,
+      m.missionRequestIntReader.buffer[1] + 6);
+
+    this.sendRawMessage(m.missionRequestIntReader.buffer);
+    */
+    // const buff = new Buffer([254, 4, 114, 255, 190, 51, seq, 0, 1, 1, 241, 117]);
+    // const numb = 114 + seq;
+    // const buff = new Buffer([254, 4, 243, 255, 190, 51, 0, 0, 1, 1, 219, 252]);
+    // this.sendRawMessage(buff);
+
+    m.missionRequestIntReader.target_system = 1;
+    m.missionRequestIntReader.base_mode = 1;
     m.missionRequestIntReader.seq = seq;
-    // m.missionRequestIntReader.crc = 34516;
-    // m.missionRequestIntReader.crc = 47186;
+    // el crc está mal calculado. Lo hemos sacado del
+    // código fuente de pixhawk en concreto este Fichero
+    // https://github.com/mavlink/c_library_v1/blob/61a161e9d550df9d464f85ad47e3cf7b32d5bd94/common/mavlink_msg_mission_request_int.h
+    m.missionRequestIntReader.crcMissionRequestInt = 196;
     m.missionRequestIntReader.createBuffer();
     this.sendRawMessage(m.missionRequestIntReader.buffer);
+  }
+  // Calcula Crc-16/x.25
+  calculateChecksum(buffer) {
+    let checksum = 0xffff;
+    for (let i = 0; i < buffer.length; i += 1) {
+      let tmp = buffer[i] ^ (checksum & 0xff);
+      tmp = (tmp ^ (tmp << 4)) & 0xFF;
+      checksum = (checksum >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4);
+      checksum &= 0xFFFF;
+    }
+    return checksum;
   }
 
   // TODO register event when receive a wp

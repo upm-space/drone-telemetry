@@ -80,6 +80,7 @@ class MavlinkWS extends wss {
       }
     }
     if (msg.type === 'askForWpList') {
+      this.telemetry.setWpManager();
       this.telemetry.getWaypoints();
     }
     if (msg.type === 'askForWp') {
@@ -142,11 +143,19 @@ class MavlinkWS extends wss {
       this.sendWsMessage(message);
     });
     this.telemetry.on('missionCount', (data) => {
-      console.log('missionCount');
+      this.telemetry.wpManager.setWpsInAutopilot(data.count);
+      console.log(`missionCount ${data.count}`);
+      this.telemetry.askForWps();
+      this.sendWsMessage(`{"type":"missionWpCount","data":${JSON.stringify(data)}}`);
     });
-
     this.telemetry.on('missionItemInt', (data) => {
-      console.log('missionItemInt');
+      console.log(`missionItemInt ${data.seq}`);
+      this.telemetry.wpManager.currentWp = data.seq;
+      this.sendWsMessage(`{"type":"downloadedOneWp","data":${JSON.stringify(data)}}`);
+    });
+    this.telemetry.on('downloadedWps', (data) => {
+      console.log(`downloadedWps ${data.totalDownloaded}`);
+      this.sendWsMessage(`{"type":"downloadedAllWp","data":${JSON.stringify(data)}}`);
     });
   }
 

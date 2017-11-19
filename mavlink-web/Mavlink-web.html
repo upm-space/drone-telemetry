@@ -22,7 +22,7 @@
             <button type="button" onclick="disConnect()">Disconnect</button><br>
             <button type="button" onclick="askForWpList()">AskForWayPoints</button><br>
             <button type="button" onclick="askForWp()">AskForAWayPoints</button>
-            <input type="number" id="wpNumber" />
+            <input type="number" id="wpNumber" value="0" />
         </div>
         <div>
            <!--
@@ -154,6 +154,25 @@
                 }
                 if(msg.type=="logData"){
                   document.getElementById("logtext").innerHTML = "Cargados: " + msg.ofset + " Mb del log Nº " + msg.id;
+                }
+
+                if(msg.type=="missionWpCount"){
+                  var combo = document.getElementById("logs");
+                  while (combo.options.length > 0) {
+                      combo.remove(0);
+                  }
+
+                  document.getElementById("logtext").innerHTML = "Total of Wp "+ msg.data.count;
+                }
+                if(msg.type=="downloadedOneWp"){
+                  var x = document.getElementById("logs");
+                  var option = document.createElement("option");
+                  option.text = "WP " + msg.data.seq + ".Type " + msg.data.command;
+                  x.add(option)
+                }
+                if(msg.type=="downloadedAllWp"){
+                  document.getElementById("logtext").innerHTML = "Wp Downloaded " + msg.data.totalDownloaded + "/" +
+                  msg.data.totalInAutopilot;
                 }
 
             }
